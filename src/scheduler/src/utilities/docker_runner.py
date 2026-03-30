@@ -31,9 +31,7 @@ def process_job(job_folder: Path, compose_folder: Path) -> int:
     
     env_file.write_text(f"INPUT={host_pwd+current_input}\nOUTPUT={host_pwd+output}")
 
-    subprocess.run(
-        ["docker", "compose", "--file", str(compose_folder / compose_name), "--env-file", str(env_file), "up"],
-        check=True,
-    )
+    command = ["docker-compose", "--file", str(compose_folder / compose_name), "--env-file", str(env_file), "up"]
+    subprocess.run(command, check=True)
 
     return 0

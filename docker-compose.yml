@@ -11,7 +11,7 @@ services:
     build: ./src/scheduler
     image: homeserver:5000/llm-orchestration/scheduler:latest
     group_add:
-      - "987"
+      - "997"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./hostData:/hostData
