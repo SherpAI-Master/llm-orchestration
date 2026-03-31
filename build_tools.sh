@@ -4,5 +4,13 @@ docker build --no-cache -t homeserver:5000/llm-orchestration/detection_misplaced
 docker build --no-cache -t homeserver:5000/llm-orchestration/detection_formatting_tier1_codebase:latest images/detection/formatting/tier1/codebase/
 docker build --no-cache -t homeserver:5000/llm-orchestration/detection_misspelled_tier1_codebase:latest images/detection/misspelled/tier1/codebase/
 docker build --no-cache -t homeserver:5000/llm-orchestration/detection_missing_tier1_codebase:latest images/detection/missing/tier1/codebase/
+docker build --no-cache -t homeserver:5000/llm-orchestration/detection_validation_tier1_codebase:latest images/detection/validation/tier1/codebase/
+
+docker build --no-cache -t homeserver:5000/llm-orchestration/correction_incomplete_tier1_codebase:latest images/correction/incomplete/tier1/codebase/
+docker build --no-cache -t homeserver:5000/llm-orchestration/correction_misplaced_tier1_codebase:latest images/correction/misplaced/tier1/codebase/
+docker build --no-cache -t homeserver:5000/llm-orchestration/correction_formatting_tier1_codebase:latest images/correction/formatting/tier1/codebase/
+
+
+
 
 # docker compose build --no-cache && docker compose up
