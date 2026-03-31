@@ -13,7 +13,7 @@
     {"pool": "detection", "tool": "validation", "tier": 1},
     {"pool": "correction", "tool": "misspelled", "tier": 1},
     {"pool": "correction", "tool": "missing_value", "tier": 1},
-    {"pool": "correction", "tool": "validation", "tier": 1},
+    {"pool": "correction", "tool": "missing_value", "tier": 1},
 
     {"pool": "integration", "tool": "ditto", "tier":1}
 ]
