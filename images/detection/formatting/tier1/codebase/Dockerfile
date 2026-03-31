@@ -1,4 +1,4 @@
-# Codebasse for detection_incomplete_tier1
+# Codebasse for detection_formatting_tier1
 FROM python:3.14-slim
 
 # Download SherpAI-Schemas (and Pandas)

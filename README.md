@@ -8,3 +8,8 @@ Through this project, the combination of error detection, data correction, data 
 # Authors
 
 Roman Klinghammer (rklinghammer@uni-potsdam.de)
+
+
+docker run --runtime nvidia --gpus all -v ~/.cache/huggingface:/root/.cache/huggingface --env "HF_TOKEN=$HF_TOKEN" -p 8000:8000 --ipc=host vllm/vllm-openai:latest --model unsloth/gemma-3-27b-it-bnb-4bit --max-model-len 8192 --trust-remote-code 
+
+docker run --runtime nvidia --gpus all -v ~/.cache/huggingface:/root/.cache/huggingface -v ~/code/llm-orchestration/ft_models/adapter:/app/adapters --env "HF_TOKEN=$HF_TOKEN" -p 8000:8000 --ipc=host vllm/vllm-openai:latest --model unsloth/gemma-3-27b-it-bnb-4bit --max-model-len 2048 --gpu-memory-utilization 0.95 --trust-remote-code --enable-lora --lora-modules detect_misplaced_tier1=/app/adapters/detect_misplaced_gemma --enforce-eager

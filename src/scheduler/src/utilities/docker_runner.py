@@ -19,19 +19,24 @@ def process_job(job_folder: Path, compose_folder: Path) -> int:
     env_file = job_folder / ".job_env"
     tool_order: list[dict] = json.loads((job_folder / "instructions.json").read_text())
 
-    #for order_nr, tool in enumerate(tool_order, start=1):
-    tool = tool_order[0]
-    compose_name = extract_compose_name(tool, compose_folder)
+    for order_nr, tool in enumerate(tool_order, start=1):
+        compose_name = extract_compose_name(tool, compose_folder)
 
-    host_pwd = os.environ["HOST_PWD"]
-    current_input = str(next(job_folder.glob(f"{1 - 1}*.jsonl")))
-    output = job_folder / f"{1}_{compose_name[:-4]}.jsonl"
-    output.touch()
-    output = str(output)
-    
-    env_file.write_text(f"INPUT={host_pwd+current_input}\nOUTPUT={host_pwd+output}")
+        host_pwd = os.environ["HOST_PWD"]
+        current_input = str(next(job_folder.glob(f"{order_nr - 1}*.jsonl")))
+        output = job_folder / f"{order_nr}_{compose_name[:-4]}.jsonl"
+        output.touch()
+        output = str(output)
 
-    command = ["docker-compose", "--file", str(compose_folder / compose_name), "--env-file", str(env_file), "up"]
-    subprocess.run(command, check=True)
+        with env_file.open(mode="w", encoding="utf-8") as f:
+            f.write(f"INPUT={host_pwd+current_input}\n")
+            f.write(f"OUTPUT={host_pwd+output}\n")
+            os.fsync(f.fileno())
+
+        command = ["docker-compose", "--file", str(compose_folder / compose_name), "--env-file", str(env_file), "up",'--abort-on-container-exit', '--exit-code-from', 'codebase']
+        try:
+            subprocess.run(command, check=True)
+        finally:
+            subprocess.run(["docker-compose", "-f", str(compose_folder / compose_name), "down"], check=False)
 
     return 0

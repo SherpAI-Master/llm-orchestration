@@ -3,6 +3,7 @@ services:
 
   codebase:
     build: ./images/detection/incomplete/tier1/codebase
+    container_name: codebase
     image: homeserver:5000/llm-orchestration/detection_incomplete_tier1_codebase:latest
     volumes:
       - ${INPUT}:/job/input.jsonl

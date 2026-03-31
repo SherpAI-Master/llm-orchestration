@@ -4,12 +4,14 @@ services:
   interaction-platform:
     build: ./src/starter
     image: homeserver:5000/llm-orchestration/starter:latest
+    container_name: interaction-platform
     depends_on:
       - orchestration-platform
 
   orchestration-platform:
     build: ./src/scheduler
     image: homeserver:5000/llm-orchestration/scheduler:latest
+    container_name: orchestration-platform
     group_add:
       - "997"
     volumes:
