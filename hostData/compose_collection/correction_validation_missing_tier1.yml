@@ -9,8 +9,7 @@ services:
       - ${INPUT}:/job/input.jsonl
       - ${OUTPUT}:/job/output.jsonl
     environment:
-      - GOOGLE_TOKEN=${GOOGLE_TOKEN}
-      - SEACH_ENGINE_ID=${SEACH_ENGINE_ID}
+      - SERPER_API=${SERPER_API}
     depends_on:
       knowledgebase:
         condition: service_healthy

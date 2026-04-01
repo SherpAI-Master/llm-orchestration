@@ -1,10 +1,4 @@
 [
-    {"pool": "correction", "tool": "misplaced", "tier": 1},
-    {"pool": "detection", "tool": "formatting", "tier": 1},
-    {"pool": "detection", "tool": "missing", "tier": 1},
-    {"pool": "detection", "tool": "validation", "tier": 1},
-    {"pool": "correction", "tool": "formatting", "tier": 1},
-    {"pool": "correction", "tool": "misspelled", "tier": 1},
     {"pool": "correction", "tool": "validation_missing", "tier": 1},
 
     {"pool": "integration", "tool": "ditto", "tier":1}

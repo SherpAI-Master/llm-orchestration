@@ -173,16 +173,11 @@ def _find_company_address( company_name: str, location: str) -> SolutionInstance
     # 1. Scrape google snippets
     print(f"\n--- Searching for {company_name} in Scraper ---")
     query = f"{company_name} {location} adresse"
-    encoded_query = urllib.parse.quote_plus(query)
-    url = f"https://www.googleapis.com/customsearch/v1?key={google_token}&cx={seach_engine_id}&q={encoded_query}&gl=de&hl=de&google_domain=google.de"
-    print("Current search url: ", url)
-    response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=10).json()
-    error = response.get("error", {})
-    if error:
-        msg = f"Google Search failed: {error.get('message', 'Unknown error.')}"
-        raise PermissionError(msg)
+    payload = {"q": query}
+    headers = {'X-API-KEY': os.getenv("SERPER_API"), 'Content-Type': 'application/json'}
+    response = requests.request("POST", "https://google.serper.dev/search", headers=headers, json=payload, timeout=10).json()
     print("RESPONSE ", response)
-    snippets = [item.get("snippet") for item in response.get("items", [])]
+    snippets = [item.get("snippet") for item in response.get("organic", [])]
     print("Snippets: ", snippets)
 
     # Parse snippets with LLM
@@ -201,12 +196,13 @@ def _find_company_address( company_name: str, location: str) -> SolutionInstance
             proposal_missing.plz.value = "LLM Error!"
     # else: LOOK INTO Crawl4AI
     # Scrape links directly for more information about the addresses
-    links = [item["link"] for item in response.get("items", [])]
+    links = [item["link"] for item in response.get("organic", [])]
     print("ALL Links found: ", links)
     allowed_links = _filter_with_robots_txt(links)
     print("All allowed links: ", allowed_links)
     print("Final proposal --> ", proposal_missing, "\n\n")
     return proposal_missing
+
 
 def fix_validation_missing( row_dict: dict) -> SolutionInstance:
     """Retrive every possible missing or validation error value .
@@ -215,7 +211,7 @@ def fix_validation_missing( row_dict: dict) -> SolutionInstance:
     :type row_dict: dict
     """
     # Check if missing values / or validation errors even exist
-    current_proposal: SolutionInstance = row_dict["SolutionInstance"]
+    current_proposal: SolutionInstance = row_dict["SolutionSpace"]
     missing_cols: list[str] = row_dict["ProblemSpace"].missing_value
     validation_cols: list[str] = row_dict["ProblemSpace"].validation
     needed_cols = missing_cols + validation_cols
