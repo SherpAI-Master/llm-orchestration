@@ -15,6 +15,6 @@ docker build --no-cache -t homeserver:5000/llm-orchestration/correction_incomple
 docker build --no-cache -t homeserver:5000/llm-orchestration/correction_misplaced_tier1_codebase:latest images/correction/misplaced/tier1/codebase/
 docker build --no-cache -t homeserver:5000/llm-orchestration/correction_formatting_tier1_codebase:latest images/correction/formatting/tier1/codebase/
 docker build --no-cache -t homeserver:5000/llm-orchestration/correction_misspelled_tier1_codebase:latest images/correction/misspelled/tier1/codebase/
-
+docker build --no-cache -t homeserver:5000/llm-orchestration/correction_validation_missing_tier1_codebase:latest images/correction/validation_missing/tier1/codebase/
 
 # docker compose build --no-cache && docker compose up

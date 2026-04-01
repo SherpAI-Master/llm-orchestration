@@ -11,7 +11,7 @@ import urllib.parse
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 
-from sherpai_schemas import ProblemInstance, SolutionInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
+from sherpai_schemas import SolutionInstance, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
 
 
 INPUT = Path("/job/input.jsonl")
@@ -20,55 +20,7 @@ OUTPUT = Path("/job/output.jsonl")
 USER_AGENT = "MasterThesis_DataQualityBot (rklinghammer@uni-potsdam.de)"
 
 
-def fix_missing_validation_value(self, row_dict: dict) -> SolutionInstance:
-    """Retrive every possible missing or validation error value .
-
-    :param row_dict: Dict row of data
-    :type row_dict: dict
-    """
-    # Check if missing values / or validation errors even exist
-    current_proposal: SolutionInstance = row_dict["SolutionInstance"]
-    missing_cols: list[str] = row_dict["ProblemSpace"].missing_value
-    validation_cols: list[str] = row_dict["ProblemSpace"].validation
-    needed_cols = missing_cols + validation_cols
-
-    if not missing_cols and not validation_cols:
-        return current_proposal
-
-    # Map each missing column to a function to get the value
-    tool_map = {
-        "hybrid": self._combine_hybrid,
-        "typ": self._extract_typ,
-        "nr": self._extract_nr,
-        "klassifik": self._impute_klassifik,
-        "name1": None,  # So essential. will be hard without. Maybe look for address and see if found
-        "zeile1": self._find_company_address,
-        "plz": self._find_company_address,
-        "ort": self._find_company_address,
-        "land": self._find_company_address,
-        "ustid": None,  # possible to verify --> https://ec.europa.eu/taxation_customs/vies/services/checkVatService.wsdl
-        "steuernr": None,  # Private / not really possible
-        "iln": None,
-    }
-
-    # Execute needed tools
-    combined_proposal = SolutionInstance()
-    needed_tools = list({tool_map[col] for col in needed_cols if tool_map.get(col)})
-    for method in needed_tools:
-        match method:
-            case self._combine_hybrid:
-                combined_proposal.combine(self._combine_hybrid(row_dict["typ"], row_dict["nr"]))
-            case self._extract_typ:
-                combined_proposal.combine(self._extract_typ(row_dict["hybrid"]))
-            case self._extract_nr:
-                combined_proposal.combine(self._extract_nr(row_dict["hybrid"]))
-            case self._impute_klassifik:
-                combined_proposal.combine(self._impute_klassifik(row_dict["name1"]))
-            case self._find_company_address:
-                combined_proposal.combine(self._find_company_address(row_dict["name1"], row_dict["ort"]))
-    return combined_proposal
-
-def _combine_hybrid(self, typ: str, nr: str) -> SolutionInstance:
+def _combine_hybrid( typ: str, nr: str) -> SolutionInstance:
     """Combine typ and nr to their hybrid form."""
     proposal = SolutionInstance()
 
@@ -80,7 +32,7 @@ def _combine_hybrid(self, typ: str, nr: str) -> SolutionInstance:
 
     return proposal
 
-def _extract_typ(self, hybrid: str) -> SolutionInstance:
+def _extract_typ( hybrid: str) -> SolutionInstance:
     """Extract 'typ' from the combined data column 'hybrid'(PERS_#_###)."""
     proposal = SolutionInstance()
 
@@ -92,7 +44,7 @@ def _extract_typ(self, hybrid: str) -> SolutionInstance:
 
     return proposal
 
-def _extract_nr(self, hybrid: str) -> SolutionInstance:
+def _extract_nr( hybrid: str) -> SolutionInstance:
     """Extract 'nr' from the combined data column 'hybrid'(PERS_#_###)."""
     proposal = SolutionInstance()
 
@@ -104,22 +56,37 @@ def _extract_nr(self, hybrid: str) -> SolutionInstance:
 
     return proposal
 
-def _impute_klassifik(self, name: str) -> SolutionInstance:
+def _impute_klassifik( name: str) -> SolutionInstance:
     """Predict if data is company, person or unknown via LLM."""
     proposal = SolutionInstance()
 
     if not name:
         return proposal
 
-    self.model.prompt = Prompts.EXTRACT_KLASSIFIK
-    imputed_klassifik = self.model.impute_klassifik(name)
+    assistant_response = inference_conversation(
+        system_prompt=Prompts.EXTRACT_KLASSIFIK_SYSTEM,
+        user_prompt=name,
+        model="unsloth/gemma-3-27b-it-bnb-4bit"
+        )
+    print("IMPUTE KLASSIFIK ASSISTANT: ", assistant_response)
+
+    obj_for_failed = {"prediction": 90, "reason": "Failed process!"}
+    imputed_klassifik = obj_for_failed
+
+    if assistant_response:
+        match = re.search(r"\{.*\}", assistant_response, re.DOTALL)
+        if match:
+            imputed_klassifik = smart_cast(match.group(0), return_on_fail=obj_for_failed)
+        else:
+            print("No JSON object found in output")
 
     proposal.klassifik.value = imputed_klassifik["prediction"]
     proposal.klassifik.reason = imputed_klassifik["reason"]
 
     return proposal
 
-def _filter_with_robots_txt(self, link_list: list[str]) -> list[str]:
+
+def _filter_with_robots_txt( link_list: list[str]) -> list[str]:
     """Check robots txt if list of links are allowed to scrape.
 
     :param link_list: List of possible links
@@ -143,7 +110,7 @@ def _filter_with_robots_txt(self, link_list: list[str]) -> list[str]:
 
     return allowed_links
 
-def _score_res_address(self, addr_list: list[dict]) -> int:
+def _score_res_address( addr_list: list[dict]) -> int:
     """Evaluate completeness of extracted address by model."""
     best_addr = None, float("-inf")
     for addr in addr_list:
@@ -160,7 +127,30 @@ def _score_res_address(self, addr_list: list[dict]) -> int:
             best_addr = addr, score
     return best_addr[0]
 
-def _find_company_address(self, company_name: str, location: str) -> SolutionInstance:
+def _extract_address(user_input: str) -> dict:
+    """Take string and return json format for addresses.
+
+    :param user_input: Google Snippets from scraper
+    :type user_input: str
+    :return: Dict with found values for address
+    :rtype: dict
+    """
+    assistant_response = inference_conversation(
+        system_prompt=Prompts.EXTRACT_ADDRESS_SYSTEM,
+        user_prompt=user_input,
+        model="unsloth/gemma-3-27b-it-bnb-4bit"
+        )
+    print("EXTRACT ADDRESS ASSISTANT: ", assistant_response)
+
+    if assistant_response:
+        match = re.search(r"\{.*\}", assistant_response, re.DOTALL)
+        if not match:
+            print("No JSON object found in output")
+            return {}
+        return smart_cast(match.group(0), return_on_fail={})
+    return {}
+
+def _find_company_address( company_name: str, location: str) -> SolutionInstance:
     """Scrape company address, city, zip code and country form the web.
 
     Function for scraping an up-to-data address of a company with the following plan:
@@ -177,7 +167,6 @@ def _find_company_address(self, company_name: str, location: str) -> SolutionIns
     if not company_name:
         return proposal_missing
 
-    load_dotenv()
     google_token = os.getenv("GOOGLE_TOKEN")
     seach_engine_id = os.getenv("SEACH_ENGINE_ID")
 
@@ -197,9 +186,8 @@ def _find_company_address(self, company_name: str, location: str) -> SolutionIns
     print("Snippets: ", snippets)
 
     # Parse snippets with LLM
-    self.model.prompt = Prompts.EXTRACT_ADDRESS.value
-    response_collection = [self.model.extract_address(snip) for snip in snippets]
-    best_res = self._score_res_address(response_collection)
+    response_collection = [_extract_address(snip) for snip in snippets]
+    best_res = _score_res_address(response_collection)
     if best_res:
         try:
             proposal_missing.zeile1.value = best_res["street"].replace(",", "_")
@@ -215,13 +203,62 @@ def _find_company_address(self, company_name: str, location: str) -> SolutionIns
     # Scrape links directly for more information about the addresses
     links = [item["link"] for item in response.get("items", [])]
     print("ALL Links found: ", links)
-    allowed_links = self._filter_with_robots_txt(links)
+    allowed_links = _filter_with_robots_txt(links)
     print("All allowed links: ", allowed_links)
     print("Final proposal --> ", proposal_missing, "\n\n")
     return proposal_missing
 
+def fix_validation_missing( row_dict: dict) -> SolutionInstance:
+    """Retrive every possible missing or validation error value .
+
+    :param row_dict: Dict row of data
+    :type row_dict: dict
+    """
+    # Check if missing values / or validation errors even exist
+    current_proposal: SolutionInstance = row_dict["SolutionInstance"]
+    missing_cols: list[str] = row_dict["ProblemSpace"].missing_value
+    validation_cols: list[str] = row_dict["ProblemSpace"].validation
+    needed_cols = missing_cols + validation_cols
+
+    if not missing_cols and not validation_cols:
+        return current_proposal
+
+    # Map each missing column to a function to get the value
+    tool_map = {
+        "hybrid": _combine_hybrid,
+        "typ": _extract_typ,
+        "nr": _extract_nr,
+        "klassifik": _impute_klassifik,
+        "name1": None,  # So essential. will be hard without. Maybe look for address and see if found
+        "zeile1": _find_company_address,
+        "plz": _find_company_address,
+        "ort": _find_company_address,
+        "land": _find_company_address,
+        "ustid": None,  # possible to verify --> https://ec.europa.eu/taxation_customs/vies/services/checkVatService.wsdl
+        "steuernr": None,  # Private / not really possible
+        "iln": None,
+    }
+
+    # Execute needed tools
+    combined_proposal = SolutionInstance()
+    needed_tools = list({tool_map[col] for col in needed_cols if tool_map.get(col)})
+    for method in needed_tools:
+        for method in needed_tools:
+            if method == _combine_hybrid:
+                combined_proposal.combine(_combine_hybrid(row_dict.get("typ"), row_dict.get("nr")))
+            elif method == _extract_typ:
+                combined_proposal.combine(_extract_typ(row_dict.get("hybrid")))
+            elif method == _extract_nr:
+                combined_proposal.combine(_extract_nr(row_dict.get("hybrid")))
+            elif method == _impute_klassifik:
+                combined_proposal.combine(_impute_klassifik(row_dict.get("name1")))
+            elif method == _find_company_address:
+                combined_proposal.combine(_find_company_address(row_dict.get("name1"), row_dict.get("ort")))
+    return combined_proposal
+
 df = pd.read_json(INPUT, lines=True)
 df = parse_dimensions_from_str(df)
-df["ProblemSpace"] = df.apply(detect_validation, axis=1)
+df["SolutionSpace"] = df.apply(fix_validation_missing, axis=1)
+df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
 df = parse_dimensions_to_str(df)
 df.to_json(OUTPUT, lines=True, orient="records")
