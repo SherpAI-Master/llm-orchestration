@@ -12,7 +12,7 @@ OUTPUT = Path("/job/output.jsonl")
 
 def fix_misplaced(data_row: pd.Series) -> SolutionInstance:
     """Correct misplaced values in data row."""
-    proposal = SolutionInstance()
+    proposal: SolutionInstance = data_row["SolutionSpace"]
     misplaced: list[str] = data_row["ProblemSpace"].misplaced
 
     if not misplaced:
@@ -54,5 +54,6 @@ def fix_misplaced(data_row: pd.Series) -> SolutionInstance:
 df = pd.read_json(INPUT, lines=True)
 df = parse_dimensions_from_str(df)
 df["SolutionSpace"] = df.apply(fix_misplaced, axis=1)
+df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
 df = parse_dimensions_to_str(df)
 df.to_json(OUTPUT, lines=True, orient="records")

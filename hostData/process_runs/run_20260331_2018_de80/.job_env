@@ -1,2 +1,0 @@
-INPUT=/home/roman/code/llm-orchestration/hostData/process_runs/run_20260331_2018_de80/3_detection_formatting_tier1.jsonl
-OUTPUT=/home/roman/code/llm-orchestration/hostData/process_runs/run_20260331_2018_de80/4_detection_misspelled_tier1.jsonl

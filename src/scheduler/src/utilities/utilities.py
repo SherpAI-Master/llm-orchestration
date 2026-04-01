@@ -32,6 +32,8 @@ def add_data_dimensions(data: Path) -> Path:
     :return: Path with original data with added data dimensions
     """
     df = pd.read_json(data, lines=True)
+    if {"ProblemSpace", "SolutionSpace", "MetaDataSpace"}.issubset(df.columns):
+        return data
     df["ProblemSpace"] = ""
     df["SolutionSpace"] = ""
     df["MetaDataSpace"] = [{} for _ in range(len(df))] # TODO: make a __str__ transformation for MetaDataSpace

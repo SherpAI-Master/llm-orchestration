@@ -1,2 +1,0 @@
-INPUT=/home/roman/code/llm-orchestration/hostData/process_runs/run_20260401_0121_eee5/4_detection_validation_tier1.jsonl
-OUTPUT=/home/roman/code/llm-orchestration/hostData/process_runs/run_20260401_0121_eee5/5_correction_formatting_tier1.jsonl

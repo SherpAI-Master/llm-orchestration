@@ -18,7 +18,7 @@ def fix_incomplete(data_row: pd.Series) -> SolutionInstance:
     :return: A proposal withe fixes in the current row
     :rtype: SolutionInstance
     """
-    proposal = SolutionInstance()
+    proposal: SolutionInstance = data_row["SolutionSpace"]
     incomplete: list[str] = data_row["ProblemSpace"].incomplete
 
     if not incomplete:
@@ -46,5 +46,6 @@ def fix_incomplete(data_row: pd.Series) -> SolutionInstance:
 df = pd.read_json(INPUT, lines=True)
 df = parse_dimensions_from_str(df)
 df["SolutionSpace"] = df.apply(fix_incomplete, axis=1)
+df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
 df = parse_dimensions_to_str(df)
 df.to_json(OUTPUT, lines=True, orient="records")

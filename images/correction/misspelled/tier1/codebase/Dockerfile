@@ -1,4 +1,4 @@
-# Codebasse for detection_misspelled_tier1
+# Codebasse for correction_misspelled_tier1
 FROM python:3.14-slim
 
 # Download SherpAI-Schemas (and Pandas)

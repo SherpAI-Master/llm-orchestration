@@ -21,7 +21,7 @@ services:
       - /home/roman/.cache/huggingface:/root/.cache/huggingface
       - /home/roman/code/llm-orchestration/ft_models/adapter:/app/adapters
     environment:
-      - HF_TOKEN=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
+      - HF_TOKEN=${HF_TOKEN}
     ipc: host
     deploy:
       resources:

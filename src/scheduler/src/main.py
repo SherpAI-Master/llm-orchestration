@@ -17,7 +17,7 @@ app = FastAPI()
 
 
 @app.post("/process")
-async def process_files(data: UploadFile, instructions: UploadFile) -> str:
+async def process_files(data: UploadFile, instructions: UploadFile, env: UploadFile) -> str:
     """Start data quality process with given order and input data.
 
     :param data: Uploaded JSONL file
@@ -36,7 +36,7 @@ async def process_files(data: UploadFile, instructions: UploadFile) -> str:
 
     # Add .job_env
     env_path = job_folder / ".job_env"
-    env_path.touch()
+    env_path.write_bytes(await env.read())
 
     # Add data dimensions (Problem-, Solution- and MetaDataSpace)
     input_data_path = add_data_dimensions(input_data_path)

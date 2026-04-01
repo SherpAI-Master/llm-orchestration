@@ -4,6 +4,7 @@ import json
 import subprocess
 from pathlib import Path
 import os
+from dotenv import set_key
 
 from .utilities import extract_compose_name
 
@@ -28,10 +29,8 @@ def process_job(job_folder: Path, compose_folder: Path) -> int:
         output.touch()
         output = str(output)
 
-        with env_file.open(mode="w", encoding="utf-8") as f:
-            f.write(f"INPUT={host_pwd+current_input}\n")
-            f.write(f"OUTPUT={host_pwd+output}\n")
-            os.fsync(f.fileno())
+        set_key(str(env_file), "INPUT", host_pwd + current_input)
+        set_key(str(env_file), "OUTPUT", host_pwd + output)
 
         command = ["docker-compose", "--file", str(compose_folder / compose_name), "--env-file", str(env_file), "up",'--abort-on-container-exit', '--exit-code-from', 'codebase']
         try:
