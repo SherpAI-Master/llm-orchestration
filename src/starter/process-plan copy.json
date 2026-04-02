@@ -15,5 +15,6 @@
     {"pool": "correction", "tool": "misspelled", "tier": 1},
     {"pool": "correction", "tool": "validation_missing", "tier": 1},
 
+    {"pool": "integration", "tool": "duplication_pairs", "tier":1},
     {"pool": "integration", "tool": "ditto", "tier":1}
 ]

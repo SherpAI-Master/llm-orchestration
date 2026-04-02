@@ -1,6 +1,7 @@
 ft_models/
 **/*.env
 hostData/process_runs/*
+data/statics/milvus/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

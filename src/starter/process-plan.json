@@ -1,5 +1,3 @@
 [
-    {"pool": "correction", "tool": "validation_missing", "tier": 1},
-
-    {"pool": "integration", "tool": "ditto", "tier":1}
+    {"pool": "integration", "tool": "duplication_pairs", "tier":1}
 ]

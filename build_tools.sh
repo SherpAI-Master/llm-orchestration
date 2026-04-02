@@ -17,4 +17,6 @@ docker build --no-cache -t homeserver:5000/llm-orchestration/correction_formatti
 docker build --no-cache -t homeserver:5000/llm-orchestration/correction_misspelled_tier1_codebase:latest images/correction/misspelled/tier1/codebase/
 docker build --no-cache -t homeserver:5000/llm-orchestration/correction_validation_missing_tier1_codebase:latest images/correction/validation_missing/tier1/codebase/
 
+docker build --no-cache -t homeserver:5000/llm-orchestration/integration_duplicate_pairs_tier1_codebase:latestimages/integration/duplicate_pairs/tier1/codebase/
+
 # docker compose build --no-cache && docker compose up
