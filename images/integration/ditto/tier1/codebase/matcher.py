@@ -179,7 +179,6 @@ def predict(
         pairs = []
         rows = []
         for idx, row in tqdm(enumerate(reader)):
-            print("AHHHHH", row, type(row))
             pairs.append(to_str(row[0], row[1], summarizer, max_len, dk_injector))
             rows.append(row)
             if len(pairs) == batch_size:
