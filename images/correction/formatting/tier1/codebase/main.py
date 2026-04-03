@@ -35,12 +35,9 @@ if __name__ == "__main__":
     df = parse_dimensions_from_str(df)
     df["BATCH_LATER_formatting"] = None
     df["SolutionSpace"] = df.apply(remember_formatting, axis=1)
-    print("HIERHIERHIER", df["BATCH_LATER_formatting"].head(), "\n")
     formatting_mask = df["BATCH_LATER_formatting"].notna()
     formatting_input = df[formatting_mask]["BATCH_LATER_formatting"]
     all_proposals = batch_inference_fix_formatting(formatting_input)
-    print("AHAHAHAAH", all_proposals, "\n")
-
     df.loc[formatting_mask, "BATCH_LATER_formatting"] = all_proposals
     df[formatting_mask].apply(
         lambda row: row["SolutionSpace"].combine(row["BATCH_LATER_formatting"]),

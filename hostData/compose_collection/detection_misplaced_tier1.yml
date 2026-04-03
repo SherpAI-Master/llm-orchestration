@@ -11,7 +11,6 @@ services:
       - ${INPUT}:/job/input.jsonl
       - ${OUTPUT}:/job/output.jsonl
 
-
 networks:
   llm-net:
     external: true

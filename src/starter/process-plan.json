@@ -1,6 +1,5 @@
 [
+    {"pool": "detection", "tool": "incomplete", "tier": 1},
+    {"pool": "correction", "tool": "incomplete", "tier": 1}
 
-    {"pool": "detection", "tool": "formatting", "tier": 1},
-
-    {"pool": "correction", "tool": "formatting", "tier": 1}
 ]
