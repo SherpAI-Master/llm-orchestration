@@ -1,20 +1,6 @@
 [
-    {"pool": "detection", "tool": "incomplete", "tier": 1},
-    {"pool": "detection", "tool": "misplaced", "tier": 1},
-    {"pool": "detection", "tool": "formatting", "tier": 1},
-    {"pool": "detection", "tool": "misspelled", "tier": 1},
-    {"pool": "detection", "tool": "missing", "tier": 1},
-    {"pool": "detection", "tool": "validation", "tier": 1},
 
-    {"pool": "correction", "tool": "incomplete", "tier": 1},
-    {"pool": "correction", "tool": "misplaced", "tier": 1},
     {"pool": "detection", "tool": "formatting", "tier": 1},
-    {"pool": "detection", "tool": "missing", "tier": 1},
-    {"pool": "detection", "tool": "validation", "tier": 1},
-    {"pool": "correction", "tool": "formatting", "tier": 1},
-    {"pool": "correction", "tool": "misspelled", "tier": 1},
-    {"pool": "correction", "tool": "validation_missing", "tier": 1},
 
-    {"pool": "integration", "tool": "duplication_pairs", "tier":1},
-    {"pool": "integration", "tool": "ditto", "tier":1}
+    {"pool": "correction", "tool": "formatting", "tier": 1}
 ]

@@ -4,42 +4,14 @@ services:
   codebase:
     build: ./images/integration/duplicate_pairs/tier1/codebase
     container_name: codebase
+    networks:
+      - llm-net
     image: homeserver:5000/llm-orchestration/integration_duplicate_pairs_tier1_codebase:latest
     volumes:
       - ${INPUT}:/job/input.jsonl
       - ${OUTPUT}:/job/output.jsonl
       - /home/roman/code/llm-orchestration/data/statics/milvus/vector.db:/job/vector.db
-    depends_on:
-      knowledgebase:
-        condition: service_healthy
 
-  knowledgebase:
-    image: vllm/vllm-openai:latest
-    container_name: knowledgebase
-    ports:
-      - "8090:8000"
-    volumes:
-      - /home/roman/.cache/huggingface:/root/.cache/huggingface
-      - /home/roman/code/llm-orchestration/ft_models/adapter:/app/adapters
-    environment:
-      - HF_TOKEN=${HF_TOKEN}
-    ipc: host
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    # The command section handles all the vLLM specific flags
-    command: >
-      --model sentence-transformers/all-MiniLM-L6-v2
-      --max-model-len 256
-      --gpu-memory-utilization 0.7
-      --trust-remote-code
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+networks:
+  llm-net:
+    external: true

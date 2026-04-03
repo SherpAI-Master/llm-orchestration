@@ -11,7 +11,7 @@ import urllib.parse
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 
-from sherpai_schemas import SolutionInstance, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
+from sherpai_schemas import SolutionInstance, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast, batch_inference_klassifik, batch_inference_address_extraction
 
 
 INPUT = Path("/job/input.jsonl")
@@ -56,19 +56,22 @@ def _extract_nr( hybrid: str) -> SolutionInstance:
 
     return proposal
 
-def _impute_klassifik( name: str) -> SolutionInstance:
+def _remember_klassifik(row: pd.Series) -> SolutionInstance:
     """Predict if data is company, person or unknown via LLM."""
     proposal = SolutionInstance()
+    name = row.get("name1")
 
     if not name:
         return proposal
 
-    assistant_response = inference_conversation(
+    df.at[row.name, "BATCH_LATER_klassifik"] = name
+
+    """ assistant_response = inference_conversation(
         system_prompt=Prompts.EXTRACT_KLASSIFIK_SYSTEM,
         user_prompt=name,
         model="unsloth/gemma-3-27b-it-bnb-4bit"
-        )
-    print("IMPUTE KLASSIFIK ASSISTANT: ", assistant_response)
+        ) """
+    """ print("IMPUTE KLASSIFIK ASSISTANT: ", assistant_response)
 
     obj_for_failed = {"prediction": 90, "reason": "Failed process!"}
     imputed_klassifik = obj_for_failed
@@ -82,7 +85,7 @@ def _impute_klassifik( name: str) -> SolutionInstance:
 
     proposal.klassifik.value = imputed_klassifik["prediction"]
     proposal.klassifik.reason = imputed_klassifik["reason"]
-
+    """
     return proposal
 
 
@@ -150,7 +153,7 @@ def _extract_address(user_input: str) -> dict:
         return smart_cast(match.group(0), return_on_fail={})
     return {}
 
-def _find_company_address( company_name: str, location: str) -> SolutionInstance:
+def _remember_company_address(row: pd.Series) -> SolutionInstance:
     """Scrape company address, city, zip code and country form the web.
 
     Function for scraping an up-to-data address of a company with the following plan:
@@ -164,11 +167,11 @@ def _find_company_address( company_name: str, location: str) -> SolutionInstance
     :rtype: str
     """
     proposal_missing = SolutionInstance()
+    company_name = row.get("name1")
+    location = row.get("ort")
+
     if not company_name:
         return proposal_missing
-
-    google_token = os.getenv("GOOGLE_TOKEN")
-    seach_engine_id = os.getenv("SEACH_ENGINE_ID")
 
     # 1. Scrape google snippets
     print(f"\n--- Searching for {company_name} in Scraper ---")
@@ -176,44 +179,24 @@ def _find_company_address( company_name: str, location: str) -> SolutionInstance
     payload = {"q": query}
     headers = {'X-API-KEY': os.getenv("SERPER_API"), 'Content-Type': 'application/json'}
     response = requests.request("POST", "https://google.serper.dev/search", headers=headers, json=payload, timeout=10).json()
-    print("RESPONSE ", response)
+    #print("RESPONSE ", response)
     snippets = [item.get("snippet") for item in response.get("organic", [])]
-    print("Snippets: ", snippets)
+    #print("Snippets: ", snippets)
 
     # Parse snippets with LLM
-    response_collection = [_extract_address(snip) for snip in snippets]
-    best_res = _score_res_address(response_collection)
-    if best_res:
-        try:
-            proposal_missing.zeile1.value = best_res["street"].replace(",", "_")
-            proposal_missing.ort.value = best_res["city"].replace(",", "_")
-            proposal_missing.land.value = best_res["country"].replace(",", "_")
-            proposal_missing.plz.value = best_res["zip"].replace(",", "_")
-        except json.JSONDecodeError:
-            proposal_missing.zeile1.value = "LLM Error!"
-            proposal_missing.ort.value = "LLM Error!"
-            proposal_missing.land.value = "LLM Error!"
-            proposal_missing.plz.value = "LLM Error!"
-    # else: LOOK INTO Crawl4AI
-    # Scrape links directly for more information about the addresses
-    links = [item["link"] for item in response.get("organic", [])]
-    print("ALL Links found: ", links)
-    allowed_links = _filter_with_robots_txt(links)
-    print("All allowed links: ", allowed_links)
-    print("Final proposal --> ", proposal_missing, "\n\n")
+    df.at[row.name, "BATCH_LATER_address"] = snippets
     return proposal_missing
 
-
-def fix_validation_missing( row_dict: dict) -> SolutionInstance:
+def fix_validation_missing( row: pd.Series) -> SolutionInstance:
     """Retrive every possible missing or validation error value .
 
-    :param row_dict: Dict row of data
-    :type row_dict: dict
+    :param row: Dict row of data
+    :type row: dict
     """
     # Check if missing values / or validation errors even exist
-    current_proposal: SolutionInstance = row_dict["SolutionSpace"]
-    missing_cols: list[str] = row_dict["ProblemSpace"].missing_value
-    validation_cols: list[str] = row_dict["ProblemSpace"].validation
+    current_proposal: SolutionInstance = row["SolutionSpace"]
+    missing_cols: list[str] = row["ProblemSpace"].missing_value
+    validation_cols: list[str] = row["ProblemSpace"].validation
     needed_cols = missing_cols + validation_cols
 
     if not missing_cols and not validation_cols:
@@ -224,37 +207,65 @@ def fix_validation_missing( row_dict: dict) -> SolutionInstance:
         "hybrid": _combine_hybrid,
         "typ": _extract_typ,
         "nr": _extract_nr,
-        "klassifik": _impute_klassifik,
+        "klassifik": _remember_klassifik,
         "name1": None,  # So essential. will be hard without. Maybe look for address and see if found
-        "zeile1": _find_company_address,
-        "plz": _find_company_address,
-        "ort": _find_company_address,
-        "land": _find_company_address,
+        "zeile1": _remember_company_address,
+        "plz": _remember_company_address,
+        "ort": _remember_company_address,
+        "land": _remember_company_address,
         "ustid": None,  # possible to verify --> https://ec.europa.eu/taxation_customs/vies/services/checkVatService.wsdl
         "steuernr": None,  # Private / not really possible
         "iln": None,
     }
 
     # Execute needed tools
-    combined_proposal = SolutionInstance()
     needed_tools = list({tool_map[col] for col in needed_cols if tool_map.get(col)})
     for method in needed_tools:
         for method in needed_tools:
             if method == _combine_hybrid:
-                combined_proposal.combine(_combine_hybrid(row_dict.get("typ"), row_dict.get("nr")))
+                current_proposal.combine(_combine_hybrid(row.get("typ"), row.get("nr")))
             elif method == _extract_typ:
-                combined_proposal.combine(_extract_typ(row_dict.get("hybrid")))
+                current_proposal.combine(_extract_typ(row.get("hybrid")))
             elif method == _extract_nr:
-                combined_proposal.combine(_extract_nr(row_dict.get("hybrid")))
-            elif method == _impute_klassifik:
-                combined_proposal.combine(_impute_klassifik(row_dict.get("name1")))
-            elif method == _find_company_address:
-                combined_proposal.combine(_find_company_address(row_dict.get("name1"), row_dict.get("ort")))
-    return combined_proposal
+                current_proposal.combine(_extract_nr(row.get("hybrid")))
+            elif method == _remember_klassifik:
+                current_proposal.combine(_remember_klassifik(row))
+            elif method == _remember_company_address:
+                current_proposal.combine(_remember_company_address(row))
+    return current_proposal
 
-df = pd.read_json(INPUT, lines=True)
-df = parse_dimensions_from_str(df)
-df["SolutionSpace"] = df.apply(fix_validation_missing, axis=1)
-df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
-df = parse_dimensions_to_str(df)
-df.to_json(OUTPUT, lines=True, orient="records")
+
+if __name__ == "__main__":
+    df = pd.read_json(INPUT, lines=True)
+    df = parse_dimensions_from_str(df)
+    df["BATCH_LATER_klassifik"] = None # Col for saving LLM calls
+    df["BATCH_LATER_address"] = None # Col for saving LLM calls
+    df["SolutionSpace"] = df.apply(fix_validation_missing, axis=1)
+    print("--- Inspection: HERE FIRST ---")
+    print(df[["SolutionSpace", "BATCH_LATER_klassifik"]].head(10))
+
+    # Batch inference klassifik imputation
+    klassifik_mask = df["BATCH_LATER_klassifik"].notna()
+    klassifik_input = df[klassifik_mask]["BATCH_LATER_klassifik"]
+    all_proposals = batch_inference_klassifik(klassifik_input)
+    df.loc[klassifik_mask, "BATCH_LATER_klassifik"] = all_proposals
+    df[klassifik_mask].apply(
+        lambda row: row["SolutionSpace"].combine(row["BATCH_LATER_klassifik"]),
+        axis=1
+    )
+
+    # Batch inference address extraction
+    address_mask = df["BATCH_LATER_address"].notna()
+    address_input =df[address_mask]["BATCH_LATER_address"]
+    all_proposals2 = batch_inference_address_extraction(address_input)
+    df.loc[address_mask, "BATCH_LATER_address"] = all_proposals2
+    df[address_mask].apply(
+        lambda row: row["SolutionSpace"].combine(row["BATCH_LATER_address"]),
+        axis=1
+    )
+
+    # Apply all changes
+    df.drop(columns=["BATCH_LATER_klassifik", "BATCH_LATER_address"], inplace=True)
+    df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
+    df = parse_dimensions_to_str(df)
+    df.to_json(OUTPUT, lines=True, orient="records")

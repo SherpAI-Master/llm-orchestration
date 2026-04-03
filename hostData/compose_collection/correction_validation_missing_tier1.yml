@@ -4,45 +4,15 @@ services:
   codebase:
     build: ./images/correction/validation_missing/tier1/codebase
     container_name: codebase
+    networks:
+      - llm-net
     image: homeserver:5000/llm-orchestration/correction_validation_missing_tier1_codebase:latest
     volumes:
       - ${INPUT}:/job/input.jsonl
       - ${OUTPUT}:/job/output.jsonl
     environment:
       - SERPER_API=${SERPER_API}
-    depends_on:
-      knowledgebase:
-        condition: service_healthy
 
-  knowledgebase:
-    image: vllm/vllm-openai:latest
-    container_name: knowledgebase
-    ports:
-      - "8090:8000"
-    volumes:
-      - /home/roman/.cache/huggingface:/root/.cache/huggingface
-      - /home/roman/code/llm-orchestration/ft_models/adapter:/app/adapters
-    environment:
-      - HF_TOKEN=${HF_TOKEN}
-    ipc: host
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    # The command section handles all the vLLM specific flags
-    command: >
-      --model unsloth/gemma-3-27b-it-bnb-4bit
-      --max-model-len 2048
-      --gpu-memory-utilization 0.95
-      --trust-remote-code
-      --enforce-eager
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 60s
-
+networks:
+  llm-net:
+    external: true

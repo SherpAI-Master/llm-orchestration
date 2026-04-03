@@ -5,43 +5,13 @@ services:
     build: ./images/detection/misplaced/tier1/codebase
     image: homeserver:5000/llm-orchestration/detection_misplaced_tier1_codebase:latest
     container_name: codebase
+    networks:
+      - llm-net
     volumes:
       - ${INPUT}:/job/input.jsonl
       - ${OUTPUT}:/job/output.jsonl
-    depends_on:
-      knowledgebase:
-        condition: service_healthy
 
-  knowledgebase:
-    image: vllm/vllm-openai:latest
-    container_name: knowledgebase
-    ports:
-      - "8090:8000"
-    volumes:
-      - /home/roman/.cache/huggingface:/root/.cache/huggingface
-      - /home/roman/code/llm-orchestration/ft_models/adapter:/app/adapters
-    environment:
-      - HF_TOKEN=${HF_TOKEN}
-    ipc: host
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    # The command section handles all the vLLM specific flags
-    command: >
-      --model unsloth/gemma-3-27b-it-bnb-4bit
-      --max-model-len 2048
-      --gpu-memory-utilization 0.95
-      --trust-remote-code
-      --enable-lora
-      --lora-modules detect_misplaced_gemma=/app/adapters/detect_misplaced_gemma
-      --enforce-eager
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+
+networks:
+  llm-net:
+    external: true

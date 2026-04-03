@@ -6,7 +6,10 @@ services:
     image: homeserver:5000/llm-orchestration/starter:latest
     container_name: interaction-platform
     depends_on:
-      - orchestration-platform
+      orchestration-platform:
+        condition: service_started
+      knowledgebase:
+        condition: service_healthy
 
   orchestration-platform:
     build: ./src/scheduler
@@ -19,3 +22,72 @@ services:
       - ./hostData:/hostData
     environment: 
       - HOST_PWD=${PWD}
+
+  knowledgebase:
+    image: vllm/vllm-openai:latest
+    container_name: knowledgebase
+    networks:
+      - llm-net
+    restart: unless-stopped
+    ports:
+      - "8090:8000"
+    volumes:
+      - /home/roman/.cache/huggingface:/root/.cache/huggingface
+      - /home/roman/code/llm-orchestration/ft_models/adapter:/app/adapters
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: >
+      --model unsloth/gemma-3-27b-it-bnb-4bit
+      --max-model-len 2048
+      --gpu-memory-utilization 0.90
+      --trust-remote-code
+      --enable-lora
+      --lora-modules 
+        fix_misplaced_gemma=/app/adapters/fix_misplaced_gemma 
+        detect_misplaced_gemma=/app/adapters/detect_misplaced_gemma
+      --enforce-eager
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  embedbase:
+    image: vllm/vllm-openai:latest
+    container_name: embedbase
+    networks:
+      - llm-net
+    ports:
+      - "8095:8000"
+    volumes:
+      - /home/roman/.cache/huggingface:/root/.cache/huggingface
+      - /home/roman/code/llm-orchestration/ft_models/adapter:/app/adapters
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # The command section handles all the vLLM specific flags
+    command: >
+      --model sentence-transformers/all-MiniLM-L6-v2
+      --max-model-len 256
+      --gpu-memory-utilization 0.05
+      --trust-remote-code
+
+networks:
+  llm-net:
+    external: true
