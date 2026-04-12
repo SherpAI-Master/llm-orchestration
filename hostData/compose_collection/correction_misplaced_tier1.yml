@@ -1,10 +1,10 @@
-# Detecting Incomplete values
+# Correction Misplaced values
 services:
 
   codebase:
     build: ./images/correction/misplaced/tier1/codebase
     image: homeserver:5000/llm-orchestration/correction_misplaced_tier1_codebase:latest
-    container_name: codebase
+    container_name: codebase-correction-misplaced
     networks:
       - llm-net
     volumes:

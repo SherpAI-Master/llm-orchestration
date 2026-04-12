@@ -3,7 +3,7 @@ services:
 
   codebase:
     build: ./images/detection/missing/tier1/codebase
-    container_name: codebase
+    container_name: codebase-detection-missing
     image: homeserver:5000/llm-orchestration/detection_missing_tier1_codebase:latest
     volumes:
       - ${INPUT}:/job/input.jsonl

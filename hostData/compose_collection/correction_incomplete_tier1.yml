@@ -3,7 +3,7 @@ services:
 
   codebase:
     build: ./images/correction/incomplete/tier1/codebase
-    container_name: codebase
+    container_name: codebase-correction-incomplete
     networks:
       - llm-net
     image: homeserver:5000/llm-orchestration/correction_incomplete_tier1_codebase:latest

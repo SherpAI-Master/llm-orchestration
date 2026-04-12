@@ -4,7 +4,7 @@ services:
   codebase:
     build: ./images/detection/misplaced/tier1/codebase
     image: homeserver:5000/llm-orchestration/detection_misplaced_tier1_codebase:latest
-    container_name: codebase
+    container_name: codebase-detection-misplaced
     networks:
       - llm-net
     volumes:

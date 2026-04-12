@@ -3,7 +3,7 @@ services:
 
   codebase:
     build: ./images/correction/validation_missing/tier1/codebase
-    container_name: codebase
+    container_name: codebase-correction-validation_missing
     networks:
       - llm-net
     image: homeserver:5000/llm-orchestration/correction_validation_missing_tier1_codebase:latest

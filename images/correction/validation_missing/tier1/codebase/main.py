@@ -199,7 +199,8 @@ def fix_validation_missing( row: pd.Series) -> SolutionInstance:
     validation_cols: list[str] = row["ProblemSpace"].validation
     needed_cols = missing_cols + validation_cols
 
-    if not missing_cols and not validation_cols:
+    print("Previously identified missing/validation error cols: ", needed_cols)
+    if not needed_cols:
         return current_proposal
 
     # Map each missing column to a function to get the value

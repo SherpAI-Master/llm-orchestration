@@ -154,6 +154,7 @@ def predict(
         #     return
         scores = softmax(logits, axis=1)
         for row, pred, score in zip(rows, predictions, scores):
+            print(row, flush=True)
             output = {
                 "left": row[0],
                 "right": row[1],

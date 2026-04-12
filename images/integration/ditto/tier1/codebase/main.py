@@ -13,6 +13,8 @@ df = pd.read_json(INPUT, lines=True)
 df = df.drop(columns=["ProblemSpace", "SolutionSpace", "MetaDataSpace"], errors="ignore")
 df.to_json("removed_dimensions.jsonl", orient="records", lines=True)
 
+print("INTERIM STEP! 1")
+
 with open("removed_dimensions.jsonl", "r", encoding="utf-8") as f_in, \
      open(INPUT, "w", encoding="utf-8") as f_out:
 
@@ -22,6 +24,7 @@ with open("removed_dimensions.jsonl", "r", encoding="utf-8") as f_in, \
         new_line = new_line.replace(r'}}', '}]')
         f_out.write(new_line)
 
+print("INTERIM STEP! 2")
 
 cmd = f"""
 CUDA_VISIBLE_DEVICES=0 python3 /app/matcher.py \
@@ -36,3 +39,5 @@ CUDA_VISIBLE_DEVICES=0 python3 /app/matcher.py \
 """
 print(cmd)
 subprocess.run(cmd, shell=True, executable="/bin/bash", check=True)
+
+print("INTERIM STEP! 3")

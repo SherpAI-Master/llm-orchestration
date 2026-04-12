@@ -3,7 +3,7 @@ services:
 
   codebase:
     build: ./images/detection/misspelled/tier1/codebase
-    container_name: codebase
+    container_name: codebase-detection-misspelled
     networks:
       - llm-net
     image: homeserver:5000/llm-orchestration/detection_misspelled_tier1_codebase:latest

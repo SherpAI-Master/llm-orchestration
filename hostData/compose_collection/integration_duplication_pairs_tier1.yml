@@ -3,7 +3,7 @@ services:
 
   codebase:
     build: ./images/integration/duplicate_pairs/tier1/codebase
-    container_name: codebase
+    container_name: codebase-integration-duplicate_pairs
     networks:
       - llm-net
     image: homeserver:5000/llm-orchestration/integration_duplicate_pairs_tier1_codebase:latest

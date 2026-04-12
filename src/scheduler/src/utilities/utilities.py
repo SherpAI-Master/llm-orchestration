@@ -36,7 +36,7 @@ def add_data_dimensions(data: Path) -> Path:
         return data
     df["ProblemSpace"] = ""
     df["SolutionSpace"] = ""
-    df["MetaDataSpace"] = [{} for _ in range(len(df))] # TODO: make a __str__ transformation for MetaDataSpace
+    df["MetaDataSpace"] = ""
 
     df.to_json(data, lines=True, orient="records")
     return data
