@@ -1,9 +1,8 @@
 """Helper functions for process handling."""
 
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 
@@ -16,7 +15,7 @@ def create_job_folder(base_path: Path) -> Path:
     :return: Path to new folder
     :rtype: pathlib.Path
     """
-    timestamp = datetime.now(tz=ZoneInfo("Europe/Berlin")).strftime("%Y%m%d_%H%M")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
     short_uid = secrets.token_hex(2)
     folder_name = f"run_{timestamp}_{short_uid}"
     folder_path = base_path / folder_name
@@ -36,7 +35,7 @@ def add_data_dimensions(data: Path) -> Path:
         return data
     df["ProblemSpace"] = ""
     df["SolutionSpace"] = ""
-    df["MetaDataSpace"] = ""
+    df["MetaDataSpace"] = "[]"
 
     df.to_json(data, lines=True, orient="records")
     return data

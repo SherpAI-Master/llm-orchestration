@@ -1,0 +1,9 @@
+# Environment file for a given process
+#
+# To declare tokens for Huggingface or other API KEYS
+
+HF_TOKEN=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
+
+SERPER_API=ad4650f2f23e8c973ae3f428d1c74842e70e181f
+INPUT='/home/roman/code/llm-orchestration/hostData/process_runs/run_20260412_1548_9f85/15_integration_duplication_pairs_tier1.jsonl'
+OUTPUT='/home/roman/code/llm-orchestration/hostData/process_runs/run_20260412_1548_9f85/16_integration_ditto_tier1.jsonl'

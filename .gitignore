@@ -1,6 +1,6 @@
 ft_models/
 **/*.env
-hostData/process_runs/*
+hostData/process_runs/run*
 data/statics/milvus/*
 
 # Byte-compiled / optimized / DLL files

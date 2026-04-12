@@ -268,5 +268,6 @@ if __name__ == "__main__":
     # Apply all changes
     df.drop(columns=["BATCH_LATER_klassifik", "BATCH_LATER_address"], inplace=True)
     df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
+    df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name=fix_validation_missing.__name__, trainable=False, model_name="unsloth/gemma-3-27b-it-bnb-4bit"))
     df = parse_dimensions_to_str(df)
     df.to_json(OUTPUT, lines=True, orient="records")

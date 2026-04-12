@@ -9,6 +9,8 @@ from sherpai_schemas import ProblemInstance, get_pure_data, parse_dimensions_fro
 INPUT = Path("/job/input.jsonl")
 OUTPUT = Path("/job/output.jsonl")
 
+FT_MODEL = "detect_misplaced_gemma"
+
 def detect_misplaced(data_row: pd.Series) -> ProblemInstance:
     """Identify misplaced values in data row."""
     print("\n--- Identifying misplaced Values ---")
@@ -17,7 +19,7 @@ def detect_misplaced(data_row: pd.Series) -> ProblemInstance:
     assistant_response = inference_conversation(
         system_prompt=Prompts.DETECT_MISPLACED_SYSTEM,
         user_prompt=pure_data.to_json(),
-        model="detect_misplaced_gemma"
+        model=FT_MODEL
         )
     print("IDENTIFY MISPLACED ASSISTANT: ", assistant_response)
     ident_problems.misplaced = smart_cast(assistant_response, return_on_fail=[])
@@ -26,5 +28,6 @@ def detect_misplaced(data_row: pd.Series) -> ProblemInstance:
 df = pd.read_json(INPUT, lines=True)
 df = parse_dimensions_from_str(df)
 df["ProblemSpace"] = df.apply(detect_misplaced, axis=1)
+df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name=detect_misplaced.__name__, trainable=True, model_name=FT_MODEL))
 df = parse_dimensions_to_str(df)
 df.to_json(OUTPUT, lines=True, orient="records")

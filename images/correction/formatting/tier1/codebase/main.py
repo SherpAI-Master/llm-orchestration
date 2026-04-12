@@ -45,5 +45,6 @@ if __name__ == "__main__":
     )
     df = df.drop(columns=["BATCH_LATER_formatting"])
     df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
+    df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name="correct_formatting", trainable=False, model_name="unsloth/gemma-3-27b-it-bnb-4bit"))
     df = parse_dimensions_to_str(df)
     df.to_json(OUTPUT, lines=True, orient="records")

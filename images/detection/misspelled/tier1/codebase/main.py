@@ -10,6 +10,8 @@ from sherpai_schemas import ProblemInstance, get_pure_data, parse_dimensions_fro
 INPUT = Path("/job/input.jsonl")
 OUTPUT = Path("/job/output.jsonl")
 
+MODEL = "unsloth/gemma-3-27b-it-bnb-4bit"
+
 def detect_misspelled(data_row: pd.Series) -> ProblemInstance:
     """Identify misplaced values in data row."""
     ident_problems: ProblemInstance = data_row["ProblemSpace"]
@@ -17,7 +19,7 @@ def detect_misspelled(data_row: pd.Series) -> ProblemInstance:
     assistant_response = inference_conversation(
         system_prompt=Prompts.DETECT_MISSPELLED_SYSTEM,
         user_prompt=pure_data.to_json(),
-        model="unsloth/gemma-3-27b-it-bnb-4bit"
+        model=MODEL
         )
     matches = re.search(r"\{.*\}", assistant_response)
     if not matches:
@@ -35,5 +37,6 @@ def detect_misspelled(data_row: pd.Series) -> ProblemInstance:
 df = pd.read_json(INPUT, lines=True)
 df = parse_dimensions_from_str(df)
 df["ProblemSpace"] = df.apply(detect_misspelled, axis=1)
+df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name=detect_misspelled.__name__, trainable=False, model_name=MODEL))
 df = parse_dimensions_to_str(df)
 df.to_json(OUTPUT, lines=True, orient="records")

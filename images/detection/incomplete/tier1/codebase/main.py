@@ -23,5 +23,6 @@ def detect_incomplete(data_row: pd.Series) -> ProblemInstance:
 df = pd.read_json(INPUT, lines=True)
 df = parse_dimensions_from_str(df)
 df["ProblemSpace"] = df.apply(detect_incomplete, axis=1)
+df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name=detect_incomplete.__name__, trainable=False))
 df = parse_dimensions_to_str(df)
 df.to_json(OUTPUT, lines=True, orient="records")

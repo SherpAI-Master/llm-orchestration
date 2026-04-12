@@ -28,19 +28,6 @@ def remember_incomplete(data_row: pd.Series) -> SolutionInstance:
     user_prompts = []
     for incomplete_col in incomplete:
         user_prompts.append((data_row.name, incomplete_col, Prompts.FIX_INCOMPLETE_USER.format(col_value=str(data_row[incomplete_col]), col_name=incomplete_col)))
-        """ assistant_response = inference_conversation(
-            system_prompt=Prompts.FIX_INCOMPLETE_SYSTEM,
-            user_prompt=str(data_row[incomplete_col]),
-            model="unsloth/gemma-3-27b-it-bnb-4bit")
-        matches = re.search(r'"([^"]*)"', assistant_response)
-        if not matches:
-            print(f"No STRING found in LLM output! ({incomplete_col})")
-            continue
-        useable_response = smart_cast(f'"{matches.group(0)}"', return_on_fail=None)
-        if useable_response:
-            print(f"Fixing incomplete with: {useable_response}")
-            fix: Fix = getattr(proposal, incomplete_col)
-            fix.value = useable_response """
     df.at[data_row.name, "BATCH_LATER_incomplete"] = user_prompts
     return proposal
 
@@ -62,23 +49,6 @@ if __name__ == "__main__":
     )
     df = df.drop(columns=["BATCH_LATER_incomplete"])
     df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
+    df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name="correct_incomplete", trainable=False, model_name="unsloth/gemma-3-27b-it-bnb-4bit"))
     df = parse_dimensions_to_str(df)
     df.to_json(OUTPUT, lines=True, orient="records")
-    
-    
-    """ 
-    df["BATCH_LATER_formatting"] = None
-    df["SolutionSpace"] = df.apply(remember_formatting, axis=1)
-    formatting_mask = df["BATCH_LATER_formatting"].notna()
-    formatting_input = df[formatting_mask]["BATCH_LATER_formatting"]
-    all_proposals = batch_inference_fix_formatting(formatting_input)
-    df.loc[formatting_mask, "BATCH_LATER_formatting"] = all_proposals
-    df[formatting_mask].apply(
-        lambda row: row["SolutionSpace"].combine(row["BATCH_LATER_formatting"]),
-        axis=1
-    )
-    df = df.drop(columns=["BATCH_LATER_formatting"])
-    df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
-    df = parse_dimensions_to_str(df)
-    df.to_json(OUTPUT, lines=True, orient="records")
-    """

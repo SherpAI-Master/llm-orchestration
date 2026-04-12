@@ -10,6 +10,8 @@ from sherpai_schemas import SolutionInstance, Fix, get_pure_data, parse_dimensio
 INPUT = Path("/job/input.jsonl")
 OUTPUT = Path("/job/output.jsonl")
 
+FT_MODEL = "fix_misplaced_gemma"
+
 def fix_misplaced(data_row: pd.Series) -> SolutionInstance:
     """Correct misplaced values in data row."""
     proposal: SolutionInstance = data_row["SolutionSpace"]
@@ -31,7 +33,7 @@ def fix_misplaced(data_row: pd.Series) -> SolutionInstance:
                 overfilled_col=overfilled_col,
                 overfilled_value=overfilled_value,
             ),
-            model="fix_misplaced_gemma"
+            model=FT_MODEL
         )
         print("MISPLACED ASSISTANT: ", assistant_response)
 
@@ -55,5 +57,6 @@ df = pd.read_json(INPUT, lines=True)
 df = parse_dimensions_from_str(df)
 df["SolutionSpace"] = df.apply(fix_misplaced, axis=1)
 df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
+df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name=fix_misplaced.__name__, trainable=True, model_name=FT_MODEL))
 df = parse_dimensions_to_str(df)
 df.to_json(OUTPUT, lines=True, orient="records")
