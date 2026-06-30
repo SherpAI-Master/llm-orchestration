@@ -1,5 +1,5 @@
 # Enhancing ERP Data Quality through the Interplay of LLM-based Solutions
-
+#
 This is the related GitHub repository to the master thesis _"Enhancing ERP Data Quality through the Interplay of LLM-based Solutions"_ by Roman Klinghammer.
 Through this project, the combination of error detection, data correction, data enrichment and data integration are combined into an holistic architecture.
 
