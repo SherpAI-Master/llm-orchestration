@@ -1,7 +1,6 @@
 FROM curlimages/curl:latest
 
 WORKDIR /app
-COPY . .
 
 CMD ["sh", "-c", "sleep 3 && curl -X POST http://orchestration-platform:8090/process \
     -F 'data=@/app/process-data.jsonl' \

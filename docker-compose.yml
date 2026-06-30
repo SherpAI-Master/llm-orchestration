@@ -5,6 +5,8 @@ services:
     build: ./src/starter
     image: homeserver:5000/llm-orchestration/starter:latest
     container_name: interaction-platform
+    volumes:
+      - /home/roman/llm-orchestration/src/starter:/app
     depends_on:
       orchestration-platform:
         condition: service_started
@@ -16,10 +18,10 @@ services:
     image: homeserver:5000/llm-orchestration/scheduler:latest
     container_name: orchestration-platform
     group_add:
-      - "997"
+      - "998"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./hostData:/hostData
+      - /home/roman/llm-orchestration/hostData:/hostData
     environment: 
       - HOST_PWD=${PWD}
 
@@ -33,7 +35,7 @@ services:
       - "8090:8000"
     volumes:
       - /home/roman/.cache/huggingface:/root/.cache/huggingface
-      - /home/roman/code/llm-orchestration/ft_models/adapter:/app/adapters
+      - /home/roman/llm-orchestration/ft_models/adapter:/app/adapters
     environment:
       - HF_TOKEN=${HF_TOKEN}
     ipc: host
@@ -70,7 +72,7 @@ services:
       - "8095:8000"
     volumes:
       - /home/roman/.cache/huggingface:/root/.cache/huggingface
-      - /home/roman/code/llm-orchestration/ft_models/adapter:/app/adapters
+      - /home/roman/llm-orchestration/ft_models/adapter:/app/adapters
     environment:
       - HF_TOKEN=${HF_TOKEN}
     ipc: host

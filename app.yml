@@ -1,0 +1,37 @@
+# App stack: joins the base network, references base services by container name
+
+networks:
+  llm-net:
+    external: true    # ← joins the already-running base network
+    name: llm-net
+
+services:
+
+  interaction-platform:
+    build: ./src/starter
+    image: homeserver:5000/llm-orchestration/starter:latest
+    container_name: interaction-platform
+    networks:
+      - llm-net
+    volumes:
+      - /home/roman/llm-orchestration/src/starter:/app
+    depends_on:
+      orchestration-platform:
+        condition: service_started
+    # Note: knowledgebase is in the base stack — already healthy before you
+    # ever run this compose, so depends_on is not needed here.
+    # If you want a safety guard, add a startup check in your app code instead.
+
+  orchestration-platform:
+    build: ./src/scheduler
+    image: homeserver:5000/llm-orchestration/scheduler:latest
+    container_name: orchestration-platform
+    networks:
+      - llm-net
+    group_add:
+      - "998"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/roman/llm-orchestration/hostData:/hostData
+    environment:
+      - HOST_PWD=${PWD}
