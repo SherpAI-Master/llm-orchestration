@@ -6,7 +6,7 @@ services:
     image: homeserver:5000/llm-orchestration/starter:latest
     container_name: interaction-platform
     volumes:
-      - /home/roman/llm-orchestration/src/starter:/app
+      - /opt/sherpai/llm-orchestration/src/starter:/app
     depends_on:
       orchestration-platform:
         condition: service_started
@@ -21,7 +21,7 @@ services:
       - "998"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /home/roman/llm-orchestration/hostData:/hostData
+      - /opt/sherpai/llm-orchestration/hostData:/hostData
     environment: 
       - HOST_PWD=${PWD}
 
@@ -34,8 +34,8 @@ services:
     ports:
       - "8090:8000"
     volumes:
-      - /home/roman/.cache/huggingface:/root/.cache/huggingface
-      - /home/roman/llm-orchestration/ft_models/adapter:/app/adapters
+      - /opt/sherpai/huggingface:/root/.cache/huggingface
+      - /opt/sherpai/llm-orchestration/ft_models/adapter:/app/adapters
     environment:
       - HF_TOKEN=${HF_TOKEN}
     ipc: host
@@ -71,8 +71,8 @@ services:
     ports:
       - "8095:8000"
     volumes:
-      - /home/roman/.cache/huggingface:/root/.cache/huggingface
-      - /home/roman/llm-orchestration/ft_models/adapter:/app/adapters
+      - /opt/sherpai/huggingface:/root/.cache/huggingface
+      - /opt/sherpai/llm-orchestration/ft_models/adapter:/app/adapters
     environment:
       - HF_TOKEN=${HF_TOKEN}
     ipc: host

@@ -2,8 +2,8 @@
 
 networks:
   llm-net:
+    external: true
     name: llm-net        # fixed name so the app stack can join it
-    driver: bridge
 
 services:
 
@@ -16,8 +16,8 @@ services:
     ports:
       - "8090:8000"
     volumes:
-      - /home/roman/.cache/huggingface:/root/.cache/huggingface
-      - /home/roman/llm-orchestration/ft_models/adapter:/app/adapters
+      - /opt/sherpai/huggingface:/root/.cache/huggingface
+      - /opt/sherpai/llm-orchestration/ft_models/adapter:/app/adapters
     environment:
       - HF_TOKEN=${HF_TOKEN}
     ipc: host
@@ -54,8 +54,8 @@ services:
     ports:
       - "8095:8000"
     volumes:
-      - /home/roman/.cache/huggingface:/root/.cache/huggingface
-      - /home/roman/llm-orchestration/ft_models/adapter:/app/adapters
+      - /opt/sherpai/huggingface:/root/.cache/huggingface
+      - /opt/sherpai/llm-orchestration/ft_models/adapter:/app/adapters
     environment:
       - HF_TOKEN=${HF_TOKEN}
     ipc: host

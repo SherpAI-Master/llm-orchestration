@@ -2,7 +2,7 @@
 
 networks:
   llm-net:
-    external: true    # ← joins the already-running base network
+    external: true
     name: llm-net
 
 services:
@@ -14,7 +14,7 @@ services:
     networks:
       - llm-net
     volumes:
-      - /home/roman/llm-orchestration/src/starter:/app
+      - /opt/sherpai/llm-orchestration/src/starter:/app
     depends_on:
       orchestration-platform:
         condition: service_started
@@ -32,6 +32,6 @@ services:
       - "998"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /home/roman/llm-orchestration/hostData:/hostData
+      - /opt/sherpai/llm-orchestration/hostData:/hostData
     environment:
       - HOST_PWD=${PWD}

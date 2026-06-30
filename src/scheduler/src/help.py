@@ -2,7 +2,7 @@ import pandas as pd
 import json
 
 # Load your data
-df = pd.read_json("/home/roman/code/llm-orchestration/data/detect_misplaced.jsonl", lines=True)
+df = pd.read_json("/opt/sherpai/llm-orchestration/data/detect_misplaced.jsonl", lines=True)
 
 def clean_row(row):
     # Keep input as a clean, readable dictionary (Unsloth handles the rest)
@@ -28,4 +28,4 @@ def clean_row(row):
 
 df = df.apply(clean_row, axis=1)
 print(df.head())
-df.to_json("/home/roman/code/llm-orchestration/data/detect_misplaced_ft.jsonl", lines=True, orient="records")
+df.to_json("/opt/sherpai/llm-orchestration/data/detect_misplaced_ft.jsonl", lines=True, orient="records")

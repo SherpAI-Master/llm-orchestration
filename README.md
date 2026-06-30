@@ -16,8 +16,8 @@ docker run \
   --gpus all \
   --ipc host \
   -p 8090:8000 \
-  -v /home/roman/.cache/huggingface:/root/.cache/huggingface \
-  -v /home/roman/code/llm-orchestration/ft_models/adapter:/app/adapters \
+  -v /opt/sherpai/.cache/huggingface:/root/.cache/huggingface \
+  -v /opt/sherpai/llm-orchestration/ft_models/adapter:/app/adapters \
   -e HF_TOKEN=${HF_TOKEN} \
   vllm/vllm-openai:latest \
   --model unsloth/gemma-3-27b-it-bnb-4bit \
