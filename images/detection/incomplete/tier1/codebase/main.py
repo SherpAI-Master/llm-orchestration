@@ -15,7 +15,7 @@ def detect_incomplete(data_row: pd.Series) -> ProblemInstance:
     ident_problems: ProblemInstance = data_row["ProblemSpace"]
     incomplete_cols = []
     for col_name, value in get_pure_data(data_row).items():
-        if pd.notna(value) and isinstance(value, str) and ("." in str(value) or re.search(r'[A-Z]{2}', str(value))):
+        if pd.notna(value) and isinstance(value, str) and has_abbreviation(value):
             incomplete_cols.append(col_name)
     ident_problems.incomplete = incomplete_cols
     return ident_problems
@@ -26,3 +26,7 @@ df["ProblemSpace"] = df.apply(detect_incomplete, axis=1)
 df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name=detect_incomplete.__name__, trainable=False))
 df = parse_dimensions_to_str(df)
 df.to_json(OUTPUT, lines=True, orient="records")
+
+def has_abbreviation(value: str) -> bool:
+    """Heuristic: value contains a dot or two consecutive capitals (acronym)."""
+    return "." in value or re.search(r"[A-Z]{2}", value) is not None
