@@ -16,6 +16,7 @@ def detect_incomplete(data_row: pd.Series) -> ProblemInstance:
     incomplete_cols = []
     for col_name, value in get_pure_data(data_row).items():
         if pd.notna(value) and isinstance(value, str) and ("." in str(value) or re.search(r'[A-Z]{2}', str(value))):
+            # test
             incomplete_cols.append(col_name)
     ident_problems.incomplete = incomplete_cols
     return ident_problems
