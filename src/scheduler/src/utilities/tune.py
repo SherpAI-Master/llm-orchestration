@@ -28,7 +28,7 @@ model = FastVisionModel.get_peft_model(
     # target_modules = "all-linear", # Optional now! Can specify a list if needed
 )
 
-dataset = load_dataset("json", data_files="/opt/sherpai/llm-orchestration/data/detect_misplaced_ft.jsonl", split = "train")
+dataset = load_dataset("json", data_files="llm-orchestration/data/detect_misplaced_ft.jsonl", split = "train")
 
 instruction = 'You are a data validation expert. Your task is to find values placed in the wrong columns. The correct schema is: {"hybrid": "PERS_#_######", "typ": #, "nr": ######, "klassifik": "#", "name1": "Company/Person", "zeile1": "Address", "plz": "Postal Code", "ort": "City", "land": "Country", "ustid": "########", "steuernr": "########", "iln": "########"}"}.\n        If you find misplacements, output a JSON object containing the columns needed to be switched!\n'
 def convert_to_conversation(sample):

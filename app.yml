@@ -14,7 +14,7 @@ services:
     networks:
       - llm-net
     volumes:
-      - /opt/sherpai/llm-orchestration/src/starter:/app
+      - ./src/starter:/app
     depends_on:
       orchestration-platform:
         condition: service_started
@@ -32,6 +32,6 @@ services:
       - "998"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /opt/sherpai/llm-orchestration/hostData:/hostData
+      - ./hostData:/hostData
     environment:
       - HOST_PWD=${PWD}

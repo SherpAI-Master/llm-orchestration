@@ -17,7 +17,7 @@ services:
       - "8090:8000"
     volumes:
       - /opt/sherpai/huggingface:/root/.cache/huggingface
-      - /opt/sherpai/llm-orchestration/ft_models/adapter:/app/adapters
+      - /opt/sherpai/models/adapter:/app/adapters
     environment:
       - HF_TOKEN=${HF_TOKEN}
     ipc: host
@@ -55,7 +55,7 @@ services:
       - "8095:8000"
     volumes:
       - /opt/sherpai/huggingface:/root/.cache/huggingface
-      - /opt/sherpai/llm-orchestration/ft_models/adapter:/app/adapters
+      - /opt/sherpai/models/adapter:/app/adapters
     environment:
       - HF_TOKEN=${HF_TOKEN}
     ipc: host
