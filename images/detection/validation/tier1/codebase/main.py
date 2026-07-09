@@ -9,7 +9,7 @@ import requests
 import zeep
 from zeep.exceptions import Fault
 
-from sherpai_schemas import ProblemInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
+from sherpai_schemas import SherpAIInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
 
 
 INPUT = Path("/job/input.jsonl")
@@ -138,12 +138,12 @@ def _validate_identifiers(ustid: str, steuernr: str, iln: str) -> list[str]:
     else:
         return []
 
-def detect_validation(data_row: pd.Series) -> ProblemInstance:
+def detect_validation(data_row: pd.Series) -> SherpAIInstance:
     """Identify misplaced values in data row."""
-    ident_problems: ProblemInstance = data_row["ProblemSpace"]
+    proposal: SherpAIInstance = data_row["SherpAISpace"]
     pure_data = get_pure_data(data_row)
     format_problem_cols = set(
-        ident_problems.formatting + ident_problems.missing_value,
+        proposal.formatting + proposal.missing_value,
     )
 
     basic_cols = ["hybrid", "typ", "nr", "klassifik"]
@@ -160,12 +160,13 @@ def detect_validation(data_row: pd.Series) -> ProblemInstance:
     if format_problem_cols.isdisjoint(set(id_cols)):
         identifiers = _validate_identifiers(*(pure_data[c] for c in id_cols))
 
-    ident_problems.validation = basics + address + identifiers
-    print("--- Detect Validation---", ident_problems.validation)
-    return ident_problems
+    proposal.validation = basics + address + identifiers
+    print("--- Detect Validation---", proposal.validation)
+    return proposal
 
-df = pd.read_json(INPUT, lines=True)
-df = parse_dimensions_from_str(df)
-df["ProblemSpace"] = df.apply(detect_validation, axis=1)
-df = parse_dimensions_to_str(df)
-df.to_json(OUTPUT, lines=True, orient="records")
+if __name__ == "__main__":
+    df = pd.read_json(INPUT, lines=True)
+    df = parse_dimensions_from_str(df)
+    df["SherpAISpace"] = df.apply(detect_validation, axis=1)
+    df = parse_dimensions_to_str(df)
+    df.to_json(OUTPUT, lines=True, orient="records")

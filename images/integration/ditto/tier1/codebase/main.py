@@ -10,7 +10,7 @@ MODEL = Path("/job/model")
 
 # Remove data spaces for matching
 df = pd.read_json(INPUT, lines=True)
-df = df.drop(columns=["ProblemSpace", "SolutionSpace", "MetaDataSpace"], errors="ignore")
+df = df.drop(columns=["SherpAISpace"], errors="ignore")
 df.to_json("removed_dimensions.jsonl", orient="records", lines=True)
 
 print("INTERIM STEP! 1")

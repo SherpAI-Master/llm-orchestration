@@ -4,29 +4,30 @@ import pandas as pd
 from pathlib import Path
 import re
 
-from sherpai_schemas import ProblemInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str
+from sherpai_schemas import SherpAIInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str
 
 
 INPUT = Path("/job/input.jsonl")
 OUTPUT = Path("/job/output.jsonl")
 
-def detect_incomplete(data_row: pd.Series) -> ProblemInstance:
+def detect_incomplete(data_row: pd.Series) -> SherpAIInstance:
     """See if dots, so abbreviations, are in the data."""
-    ident_problems: ProblemInstance = data_row["ProblemSpace"]
+    proposal: SherpAIInstance = data_row["SherpAISpace"]
     incomplete_cols = []
     for col_name, value in get_pure_data(data_row).items():
         if pd.notna(value) and isinstance(value, str) and has_abbreviation(value):
             incomplete_cols.append(col_name)
-    ident_problems.incomplete = incomplete_cols
-    return ident_problems
-
-df = pd.read_json(INPUT, lines=True)
-df = parse_dimensions_from_str(df)
-df["ProblemSpace"] = df.apply(detect_incomplete, axis=1)
-df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name=detect_incomplete.__name__, trainable=False))
-df = parse_dimensions_to_str(df)
-df.to_json(OUTPUT, lines=True, orient="records")
+    proposal.incomplete = incomplete_cols
+    return proposal
 
 def has_abbreviation(value: str) -> bool:
     """Heuristic: value contains a dot or two consecutive capitals (acronym)."""
     return "." in value or re.search(r"[A-Z]{2}", value) is not None
+
+if __name__ == "__main__":
+    df = pd.read_json(INPUT, lines=True)
+    df = parse_dimensions_from_str(df)
+    df["SherpAISpace"] = df.apply(detect_incomplete, axis=1)
+    df = parse_dimensions_to_str(df)
+    df.to_json(OUTPUT, lines=True, orient="records")
+
