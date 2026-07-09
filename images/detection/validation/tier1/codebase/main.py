@@ -9,7 +9,18 @@ import requests
 import zeep
 from zeep.exceptions import Fault
 
-from sherpai_schemas import ProblemInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
+from sherpai_schemas import (
+    SherpAIInstance,
+    ToolID,
+    ToolUse,
+    Pair,
+    get_pure_data,
+    parse_dimensions_from_str,
+    parse_dimensions_to_str,
+    Prompts,
+    inference_conversation,
+    smart_cast,
+)
 
 
 INPUT = Path("/job/input.jsonl")
@@ -18,55 +29,38 @@ OUTPUT = Path("/job/output.jsonl")
 USER_AGENT = "MasterThesis_DataQualityBot (rklinghammer@uni-potsdam.de)"
 
 
-def _validate_basics(
-        hybrid: str,
-        typ: str,
-        nr: str,
-        klassifik: str,
-    ) -> list[str]:
-        """Validate basic/simple descriptive stats of entity.
+def _validate_basics(basic_row: pd.Series) -> list[Pair]:
+    """Validate basic/simple descriptive stats of entity."""
 
-        :param hybrid: Combination entry of typ and nr
-        :type hybrid: str
-        :param typ: Type of entity (customer, supplier, prospect)
-        :type typ: str
-        :param nr: ID
-        :type nr: str
-        :param klassifik: Type of customer (firm, person, divers)
-        :type klassifik: str
-        :return: List of basic stats which validation is faulty
-        :rtype: list[str]
-        """
-        faulty_cols = []
+    faulty_cols = []
 
-        # Hybrid
-        if f"PERS_{typ}_{nr}" != hybrid:
-            faulty_cols.append("hybrid")
-        # typ and str
-        print("HIER DER HYBRID: ", hybrid, type(hybrid))
-        hybrid_typ, hybrid_nr = hybrid.split("_")[1:]
-        if hybrid_typ != typ:
-            faulty_cols.append("typ")
-        if hybrid_nr != nr:
-            faulty_cols.append("nr")
-        # klassifik not possible to validate (own metric/ individual data)
+    # Hybrid
+    if f"PERS_{basic_row['typ']}_{basic_row['nr']}" != basic_row["hybrid"]:
+        problem_ToolUse = ToolUse(value=[basic_row["hybrid"]], used_tool=ToolID.DETECTION_VALIDATION_TIER1)
+        pair = Pair(affected_col=["hybrid"], problem=problem_ToolUse)
+        faulty_cols.append(pair)
+    # typ and str
+    hybrid_typ, hybrid_nr = basic_row["hybrid"].split("_")[1:]
+    if hybrid_typ != basic_row["typ"]:
+        problem_ToolUse = ToolUse(value=[basic_row["typ"]], used_tool=ToolID.DETECTION_VALIDATION_TIER1)
+        pair = Pair(affected_col=["typ"], problem=problem_ToolUse)
+        faulty_cols.append(pair)
+    if hybrid_nr != basic_row["nr"]:
+        problem_ToolUse = ToolUse(value=[basic_row["nr"]], used_tool=ToolID.DETECTION_VALIDATION_TIER1)
+        pair = Pair(affected_col=["nr"], problem=problem_ToolUse)
+        faulty_cols.append(pair)
+    # klassifik not possible to validate (own metric/ individual data)
 
-        return faulty_cols
+    return faulty_cols
 
-def _validate_address(street: str, city: str, zip_code: str, country: str) -> list[str]:
-    """Check existence of address on OSM.
 
-    :param street: Street name with house number
-    :type street: str
-    :param city: City name
-    :type city: str
-    :param zip: Zip code/ PLZ
-    :type zip: str
-    :param country: Country name
-    :type country: str
-    :return: list with every unvalidatable column
-    :rtype: list[str]
-    """
+def _validate_address(address_row: pd.Series) -> list[Pair]:
+    """Check existence of address on OSM."""
+    street = address_row["zeile1"]
+    zip_code = address_row["plz"]
+    city = address_row["ort"]
+    country = address_row["land"]
+
     # Check not possible if street or region (zip/City) is missing
     if not street or not (zip_code or city):
         print(f"Skipping validation for non-German company: {country} or not ({zip_code}|{city})")
@@ -98,31 +92,43 @@ def _validate_address(street: str, city: str, zip_code: str, country: str) -> li
         print(f"API Error: {e}")
         return []
     else:
-        return ["zeile1", "plz", "ort"]
+        address_pair = Pair(
+            affected_col=["zeile1"],
+            problem=ToolUse(value=street, used_Tool=ToolID.DETECTION_VALIDATION_TIER1)
+        )
+        zip_pair = Pair(
+            affected_col=["plz"],
+            problem=ToolUse(value=zip_code, used_Tool=ToolID.DETECTION_VALIDATION_TIER1)
+        )
+        city_pair = Pair(
+            affected_col=["ort"],
+            problem=ToolUse(value=city, used_Tool=ToolID.DETECTION_VALIDATION_TIER1)
+        )
+        country_pair = Pair(
+            affected_col=["land"],
+            problem=ToolUse(value=country, used_Tool=ToolID.DETECTION_VALIDATION_TIER1)
+        )
+        return [address_pair,zip_pair,city_pair,country_pair]
 
-def _validate_identifiers(ustid: str, steuernr: str, iln: str) -> list[str]:
-    """Validate legal identifieres of entity.
 
-    :param ustid: Umsatzsteuer-Identifikationsnummer (USt-IdNr.)
-    :type ustid: str
-    :param steuernr: TaxID
-    :type steuernr: str
-    :param iln: Global Location Number (ILN/GLN)
-    :type iln: str
-    :return: A list of unvalidated identifiers (empty if all valid).
-    :rtype: list[str]
-    """
+def _validate_identifiers(id_row: pd.Series) -> list[Pair]:
+    """Validate legal identifieres of entity."""
     # SteurNr is Private
     # ILN ...
     # Validation of Ust.-ID
+   
+    ustid = id_row["ustid"]
+    
+    
     wsdl_url = "https://ec.europa.eu/taxation_customs/vies/services/checkVatService.wsdl"
 
     client = zeep.Client(wsdl=wsdl_url)
     country_code = ustid[:2].upper()
     vat_number = ustid[2:]
     print(f"Checking: {country_code} - {vat_number}...")
-
+    
     try:
+        ### Todo: check if error when not existing
         response = client.service.checkVat(
             countryCode=country_code,
             vatNumber=vat_number,
@@ -131,20 +137,23 @@ def _validate_identifiers(ustid: str, steuernr: str, iln: str) -> list[str]:
 
     except Fault as e:
         print(f"API Error: {e.message}")
-        return ["ustid"]
+        ustid_pair = Pair(
+            affected_col=["ustid"],
+            problem=ToolUse(value=ustid,used_tool=ToolID.DETECTION_VALIDATION_TIER1)
+            )
+        return [ustid_pair]
     except Exception as e:
         msg = f"System Error: {e}"
         raise SystemError(msg) from e
     else:
         return []
 
-def detect_validation(data_row: pd.Series) -> ProblemInstance:
+
+def detect_validation(data_row: pd.Series) -> SherpAIInstance:
     """Identify misplaced values in data row."""
-    ident_problems: ProblemInstance = data_row["ProblemSpace"]
+    proposal: SherpAIInstance = data_row["SherpAISpace"]
     pure_data = get_pure_data(data_row)
-    format_problem_cols = set(
-        ident_problems.formatting + ident_problems.missing_value,
-    )
+    format_problem_cols = set(proposal.get_affected_cols("formatting", "missing_value"))
 
     basic_cols = ["hybrid", "typ", "nr", "klassifik"]
     address_cols = ["zeile1", "ort", "plz", "land"]
@@ -152,20 +161,22 @@ def detect_validation(data_row: pd.Series) -> ProblemInstance:
     basics, address, identifiers = [], [], []
 
     if format_problem_cols.isdisjoint(set(basic_cols)):
-        basics = _validate_basics(*(pure_data[c] for c in basic_cols))
+        basics = _validate_basics(pure_data[basic_cols])
 
     if format_problem_cols.isdisjoint(set(address_cols)):
-        address = _validate_address(*(pure_data[c] for c in address_cols))
+        address = _validate_address(pure_data[address_cols])
 
     if format_problem_cols.isdisjoint(set(id_cols)):
-        identifiers = _validate_identifiers(*(pure_data[c] for c in id_cols))
+        identifiers = _validate_identifiers(pure_data[id_cols])
 
-    ident_problems.validation = basics + address + identifiers
-    print("--- Detect Validation---", ident_problems.validation)
-    return ident_problems
+    proposal.validation.extend(basics + address + identifiers)
+    print("--- Detect Validation---", proposal.validation)
+    return proposal
 
-df = pd.read_json(INPUT, lines=True)
-df = parse_dimensions_from_str(df)
-df["ProblemSpace"] = df.apply(detect_validation, axis=1)
-df = parse_dimensions_to_str(df)
-df.to_json(OUTPUT, lines=True, orient="records")
+
+if __name__ == "__main__":
+    df = pd.read_json(INPUT, lines=True)
+    df = parse_dimensions_from_str(df)
+    df["SherpAISpace"] = df.apply(detect_validation, axis=1)
+    df = parse_dimensions_to_str(df)
+    df.to_json(OUTPUT, lines=True, orient="records")

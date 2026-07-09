@@ -6,7 +6,7 @@ import json
 
 from pymilvus import MilvusClient
 
-from sherpai_schemas import ProblemInstance, SolutionInstance, Fix, parse_dimensions_from_str, parse_dimensions_to_str, query_db
+from sherpai_schemas import parse_dimensions_from_str, query_db
 
 
 INPUT = Path("/job/input.jsonl")

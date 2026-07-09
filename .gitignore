@@ -1,3 +1,4 @@
+.vscode
 ft_models/
 **/*.env
 hostData/process_runs/run*

@@ -4,16 +4,16 @@ import pandas as pd
 from pathlib import Path
 import re
 
-from sherpai_schemas import SolutionInstance, Fix, parse_dimensions_from_str, parse_dimensions_to_str, FormattingRules, Prompts, batch_inference_fix_formatting
+from sherpai_schemas import SherpAIInstance, parse_dimensions_from_str, parse_dimensions_to_str, FormattingRules, Prompts, batch_inference_fix_formatting
 
 
 INPUT = Path("/job/input.jsonl")
 OUTPUT = Path("/job/output.jsonl")
 
-def remember_formatting(data_row: pd.Series) -> SolutionInstance:
+def remember_formatting(data_row: pd.Series) -> SherpAIInstance:
     """Fix detected formatting if possible, else mark part as missing."""
-    proposal: SolutionInstance = data_row["SolutionSpace"]
-    bad_format_cols = data_row["ProblemSpace"].formatting
+    proposal: SherpAIInstance = data_row["SherpAISpace"]
+    bad_format_cols = proposal.formatting
 
     if not bad_format_cols:
         return proposal
