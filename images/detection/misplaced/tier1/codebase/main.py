@@ -3,7 +3,7 @@
 import pandas as pd
 from pathlib import Path
 
-from sherpai_schemas import SherpAIInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
+from sherpai_schemas import SherpAIInstance, ToolUse, Pair, ToolID, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
 
 
 INPUT = Path("/job/input.jsonl")
@@ -22,7 +22,14 @@ def detect_misplaced(data_row: pd.Series) -> SherpAIInstance:
         model=FT_MODEL
         )
     print("IDENTIFY MISPLACED ASSISTANT: ", assistant_response)
-    proposal.misplaced = smart_cast(assistant_response, return_on_fail=[])
+    ### Todo rework parsing a string / finetuning model
+    original_list = smart_cast(assistant_response, return_on_fail=[])
+    if not original_list:
+        return proposal
+    missing_col, overfilled_col = original_list[0].strip("[]'").split(">", 1)
+    toolUse = ToolUse(value=[data_row[missing_col], data_row[overfilled_col]], reason=original_list[0], used_tool=ToolID.DETECTION_MISPLACED_TIER1)
+    pair = Pair(affected_col=[missing_col, overfilled_col], problem=toolUse)
+    proposal.misplaced.append(pair)
     return proposal
 
 if __name__ == "__main__":

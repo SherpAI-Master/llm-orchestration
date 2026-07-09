@@ -3,7 +3,7 @@
 import pandas as pd
 from pathlib import Path
 
-from sherpai_schemas import SherpAIInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, FormattingRules
+from sherpai_schemas import SherpAIInstance, Pair, ToolUse, ToolID, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, FormattingRules
 
 
 INPUT = Path("/job/input.jsonl")
@@ -18,9 +18,11 @@ def detect_formatting(data_row: pd.Series) -> SherpAIInstance:
     
     for col, value in pure_data.items():
         if not FormattingRules.is_valid(col, value):
-            incorrect_cols.append(col)
+            toolUse = ToolUse(value=[value], used_Tool=ToolID.DETECTION_FORMATTING_TIER1)
+            pair = Pair(affected_col=[col],problem=toolUse)
+            incorrect_cols.append(pair)
 
-    proposal.formatting = incorrect_cols
+    proposal.formatting.extend(incorrect_cols)
     return proposal
 
 if __name__ == "__main__":

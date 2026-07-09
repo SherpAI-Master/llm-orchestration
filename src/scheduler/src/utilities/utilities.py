@@ -25,17 +25,16 @@ def create_job_folder(base_path: Path) -> Path:
     return folder_path
 
 def add_data_dimensions(data: Path) -> Path:
-    """Addition of Problem-, Solution- and MetaDataSpace to incoming data.
+    """Addition of SherpAISpace to incoming data.
 
     :param data: Raw data from job intialization
     :return: Path with original data with added data dimensions
     """
     df = pd.read_json(data, lines=True)
-    if {"ProblemSpace", "SolutionSpace", "MetaDataSpace"}.issubset(df.columns):
+    if {"SherpAISpace"}.issubset(df.columns):
         return data
-    df["ProblemSpace"] = ""
-    df["SolutionSpace"] = ""
-    df["MetaDataSpace"] = "[]"
+    df["SherpAISpace"] = ""
+   
 
     df.to_json(data, lines=True, orient="records")
     return data

@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 import re
 
-from sherpai_schemas import SherpAIInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str
+from sherpai_schemas import SherpAIInstance, Pair, ToolUse,ToolID, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str
 
 
 INPUT = Path("/job/input.jsonl")
@@ -13,10 +13,12 @@ OUTPUT = Path("/job/output.jsonl")
 def detect_incomplete(data_row: pd.Series) -> SherpAIInstance:
     """See if dots, so abbreviations, are in the data."""
     proposal: SherpAIInstance = data_row["SherpAISpace"]
-    incomplete_cols = []
+    incomplete_cols: list[Pair]= []
     for col_name, value in get_pure_data(data_row).items():
         if pd.notna(value) and isinstance(value, str) and has_abbreviation(value):
-            incomplete_cols.append(col_name)
+            problem: ToolUse = ToolUse(value=[value],used_tool=ToolID.CORRECTION_INCOMPLETE_TIER1)
+            problem_pair: Pair = Pair(affected_col=[col_name], problem=problem)         
+            incomplete_cols.append(problem_pair) 
     proposal.incomplete = incomplete_cols
     return proposal
 

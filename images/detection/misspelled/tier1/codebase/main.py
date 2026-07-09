@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 import re
 
-from sherpai_schemas import SherpAIInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
+from sherpai_schemas import SherpAIInstance, ToolID, ToolUse, Pair, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
 
 
 INPUT = Path("/job/input.jsonl")
@@ -23,21 +23,23 @@ def detect_misspelled(data_row: pd.Series) -> SherpAIInstance:
         )
     matches = re.search(r"\{.*\}", assistant_response)
     if not matches:
-        proposal.misspelled = []
         return proposal
 
     casted_response = smart_cast(matches.group(0), return_on_fail={})
     print("IDENTIFY MISSPELLED ASSISTANT: ", casted_response)
     if casted_response:
-        proposal.misspelled = [f"({col}|{fix})" for col, fix in casted_response.items()]
+        for col, fix in casted_response.items():
+            problem_toolUse = ToolUse(value=[data_row[col]], used_tool=ToolID.DETECTION_MISSPELLED_TIER1)
+            solution_toolUse = ToolUse(value=[fix], used_tool=ToolID.DETECTION_MISSPELLED_TIER1)
+            pair = Pair(affected_col=[col],problem=problem_toolUse,solution=solution_toolUse)
+        proposal.misspelled.append(pair)
         return proposal
-    proposal.misspelled = []
+
     return proposal
 
 if __name__ == "__main__":
     df = pd.read_json(INPUT, lines=True)
     df = parse_dimensions_from_str(df)
-    df["ProblemSpace"] = df.apply(detect_misspelled, axis=1)
-    df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name=detect_misspelled.__name__, trainable=False, model_name=MODEL))
+    df["SherpAISpace"] = df.apply(detect_misspelled, axis=1)
     df = parse_dimensions_to_str(df)
     df.to_json(OUTPUT, lines=True, orient="records")
