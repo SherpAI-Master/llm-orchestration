@@ -3,7 +3,7 @@
 import pandas as pd
 from pathlib import Path
 
-from sherpai_schemas import SherpAIInstance, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str
+from sherpai_schemas import SherpAIInstance, ToolUse, ToolID, Pair, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str
 
 
 INPUT = Path("/job/input.jsonl")
@@ -15,9 +15,11 @@ def detect_missing(data_row: pd.Series) -> SherpAIInstance:
     missing_cols = []
     for key, value in get_pure_data(data_row).items():
         if not value or pd.isna(value):
-            missing_cols.append(key)
-    proposal.missing_value = missing_cols
-
+            problem_toolUse = ToolUse(value=[value],used_tool=ToolID.DETECTION_MISSING_TIER1)
+            pair = Pair(affected_col=[key],problem=problem_toolUse)
+            missing_cols.append(pair)
+            
+    proposal.missing_value.extend(missing_cols)
     return proposal
 
 if __name__ == "__main__":
