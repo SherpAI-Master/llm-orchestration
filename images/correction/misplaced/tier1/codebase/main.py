@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 import re
 
-from sherpai_schemas import SolutionInstance, Fix, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, Prompts, inference_conversation, smart_cast
+from sherpai_schemas import SherpAIInstance, ToolID, ToolUse, Pair, Prompts, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, inference_conversation, smart_cast
 
 
 INPUT = Path("/job/input.jsonl")
@@ -12,19 +12,20 @@ OUTPUT = Path("/job/output.jsonl")
 
 FT_MODEL = "fix_misplaced_gemma"
 
-def fix_misplaced(data_row: pd.Series) -> SolutionInstance:
+def fix_misplaced(data_row: pd.Series) -> SherpAIInstance:
     """Correct misplaced values in data row."""
-    proposal: SolutionInstance = data_row["SolutionSpace"]
-    misplaced: list[str] = data_row["ProblemSpace"].misplaced
+    proposal: SherpAIInstance = data_row["SherpAISpace"]
+    data_row = proposal.apply_solutions(data_row)
+    misplaced: list[Pair] = proposal.misplaced
 
     if not misplaced:
         return proposal
 
     print(f"\n--- Fixing Misplaced Values of {misplaced} ---")
 
-    for problem in misplaced:
-        missing_col, overfilled_col = problem.strip("[]'").split(">", 1)
-        overfilled_value = data_row[overfilled_col]
+    for pair in misplaced:
+        missing_col, overfilled_col = pair.affected_col[0], pair.affected_col[1]
+        overfilled_value = pair.problem.value[1]
 
         assistant_response = inference_conversation(
             system_prompt=Prompts.FIX_MISPLACED_SYSTEM,
@@ -46,17 +47,15 @@ def fix_misplaced(data_row: pd.Series) -> SolutionInstance:
             useable_response = smart_cast(match.group(0), return_on_fail=None)
 
         if useable_response:
-            for key, value in useable_response.items():
-                fix: Fix = getattr(proposal, key)
-                fix.value = value
+            solution_values = [useable_response[col] for col in pair.affected_col]
+            solution_toolUse = ToolUse(value=solution_values, used_tool=ToolID.CORRECTION_MISPLACED_TIER1)
+            pair.solution = solution_toolUse
 
     return proposal
-    
+
 
 df = pd.read_json(INPUT, lines=True)
 df = parse_dimensions_from_str(df)
-df["SolutionSpace"] = df.apply(fix_misplaced, axis=1)
-df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
-df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name=fix_misplaced.__name__, trainable=True, model_name=FT_MODEL))
+df["SherpAISpace"] = df.apply(fix_misplaced, axis=1)
 df = parse_dimensions_to_str(df)
 df.to_json(OUTPUT, lines=True, orient="records")
