@@ -3,7 +3,7 @@
 import pandas as pd
 from pathlib import Path
 
-from sherpai_schemas import SherpAIInstance, ToolID, ToolUse, Pair, Prompts, parse_dimensions_from_str, parse_dimensions_to_str, batch_inference_fix_incomplete
+from sherpai_schemas import SherpAIInstance, ToolID, ToolUse, Pair, Prompts, Phase, parse_dimensions_from_str, parse_dimensions_to_str, batch_inference_fix_incomplete
 
 
 INPUT = Path("/job/input.jsonl")
@@ -21,20 +21,19 @@ def remember_incomplete(data_row: pd.Series) -> SherpAIInstance:
     user_prompts = []
     for incomplete_pair in incomplete:
         # ID, Col, Prompt
-        incomplete_pair.solution
-        
-        user_prompts.append((data_row.name, incomplete_pair, Prompts.FIX_INCOMPLETE_USER.format(col_value=str(data_row[incomplete_pair]), col_name=incomplete_pair)))
+        incomplete_pair.solution = ToolUse(value=[Prompts.FIX_INCOMPLETE_USER.format(col_value=str(data_row[incomplete_pair]), col_name=incomplete_pair)], phase=Phase.BATCHING_READY)
     df.at[data_row.name, "BATCH_LATER_incomplete"] = user_prompts
     return proposal
 
 if __name__ == "__main__":
     df = pd.read_json(INPUT, lines=True)
     df = parse_dimensions_from_str(df)
-    df["BATCH_LATER_incomplete"] = None
-    df["SolutionSpace"] = df.apply(remember_incomplete, axis=1)
+    df["SherpAISpace"] = df.apply(remember_incomplete, axis=1)
     incomplete_mask = df["BATCH_LATER_incomplete"].notna()
     incomplete_input = df[incomplete_mask]["BATCH_LATER_incomplete"]
     print("incomplete_input: ", incomplete_input)
+    # Todo: Get list of pairs where Phase== batching.ready
+    # Then: prepare all data compleytley here and then send to common SherpAI-Schemas endpoint
 
     all_proposals = batch_inference_fix_incomplete(incomplete_input)
     print("All proposals: ", all_proposals)
