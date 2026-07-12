@@ -16,8 +16,8 @@ def detect_incomplete(data_row: pd.Series) -> SherpAIInstance:
     incomplete_cols: list[Pair]= []
     for col_name, value in get_pure_data(data_row).items():
         if pd.notna(value) and isinstance(value, str) and has_abbreviation(value):
-            problem: ToolUse = ToolUse(value=[value],used_tool=ToolID.CORRECTION_INCOMPLETE_TIER1)
-            problem_pair: Pair = Pair(affected_col=[col_name], problem=problem)         
+            problem: ToolUse = ToolUse(value=[value],tool_id=ToolID.CORRECTION_INCOMPLETE_TIER1)
+            problem_pair: Pair = Pair(row_id=data_row.name, affected_col=[col_name], problem=problem)         
             incomplete_cols.append(problem_pair) 
     proposal.incomplete = incomplete_cols
     return proposal

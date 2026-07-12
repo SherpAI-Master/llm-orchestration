@@ -6,5 +6,6 @@
     {"pool": "detection", "tool": "missing", "tier": 1},
     {"pool": "detection", "tool": "validation", "tier": 1},
 
+    {"pool": "correction", "tool": "incomplete", "tier": 1},
     {"pool": "correction", "tool": "misplaced", "tier": 1}
 ]

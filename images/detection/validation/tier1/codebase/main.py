@@ -36,18 +36,18 @@ def _validate_basics(basic_row: pd.Series) -> list[Pair]:
 
     # Hybrid
     if f"PERS_{basic_row['typ']}_{basic_row['nr']}" != basic_row["hybrid"]:
-        problem_ToolUse = ToolUse(value=[basic_row["hybrid"]], used_tool=ToolID.DETECTION_VALIDATION_TIER1)
-        pair = Pair(affected_col=["hybrid"], problem=problem_ToolUse)
+        problem_ToolUse = ToolUse(value=[basic_row["hybrid"]], tool_id=ToolID.DETECTION_VALIDATION_TIER1)
+        pair = Pair(row_id=data_row.name, affected_col=["hybrid"], problem=problem_ToolUse)
         faulty_cols.append(pair)
     # typ and str
     hybrid_typ, hybrid_nr = basic_row["hybrid"].split("_")[1:]
     if hybrid_typ != basic_row["typ"]:
-        problem_ToolUse = ToolUse(value=[basic_row["typ"]], used_tool=ToolID.DETECTION_VALIDATION_TIER1)
-        pair = Pair(affected_col=["typ"], problem=problem_ToolUse)
+        problem_ToolUse = ToolUse(value=[basic_row["typ"]], tool_id=ToolID.DETECTION_VALIDATION_TIER1)
+        pair = Pair(row_id=data_row.name, affected_col=["typ"], problem=problem_ToolUse)
         faulty_cols.append(pair)
     if hybrid_nr != basic_row["nr"]:
-        problem_ToolUse = ToolUse(value=[basic_row["nr"]], used_tool=ToolID.DETECTION_VALIDATION_TIER1)
-        pair = Pair(affected_col=["nr"], problem=problem_ToolUse)
+        problem_ToolUse = ToolUse(value=[basic_row["nr"]], tool_id=ToolID.DETECTION_VALIDATION_TIER1)
+        pair = Pair(row_id=data_row.name, affected_col=["nr"], problem=problem_ToolUse)
         faulty_cols.append(pair)
     # klassifik not possible to validate (own metric/ individual data)
 
@@ -92,21 +92,21 @@ def _validate_address(address_row: pd.Series) -> list[Pair]:
         print(f"API Error: {e}")
         return []
     else:
-        address_pair = Pair(
+        address_pair = Pair(row_id=data_row.name, 
             affected_col=["zeile1"],
-            problem=ToolUse(value=street, used_Tool=ToolID.DETECTION_VALIDATION_TIER1)
+            problem=ToolUse(value=street, tool_id=ToolID.DETECTION_VALIDATION_TIER1)
         )
-        zip_pair = Pair(
+        zip_pair = Pair(row_id=data_row.name, 
             affected_col=["plz"],
-            problem=ToolUse(value=zip_code, used_Tool=ToolID.DETECTION_VALIDATION_TIER1)
+            problem=ToolUse(value=zip_code, tool_id=ToolID.DETECTION_VALIDATION_TIER1)
         )
-        city_pair = Pair(
+        city_pair = Pair(row_id=data_row.name, 
             affected_col=["ort"],
-            problem=ToolUse(value=city, used_Tool=ToolID.DETECTION_VALIDATION_TIER1)
+            problem=ToolUse(value=city, tool_id=ToolID.DETECTION_VALIDATION_TIER1)
         )
-        country_pair = Pair(
+        country_pair = Pair(row_id=data_row.name, 
             affected_col=["land"],
-            problem=ToolUse(value=country, used_Tool=ToolID.DETECTION_VALIDATION_TIER1)
+            problem=ToolUse(value=country, tool_id=ToolID.DETECTION_VALIDATION_TIER1)
         )
         return [address_pair,zip_pair,city_pair,country_pair]
 
@@ -137,9 +137,9 @@ def _validate_identifiers(id_row: pd.Series) -> list[Pair]:
 
     except Fault as e:
         print(f"API Error: {e.message}")
-        ustid_pair = Pair(
+        ustid_pair = Pair(row_id=data_row.name, 
             affected_col=["ustid"],
-            problem=ToolUse(value=ustid,used_tool=ToolID.DETECTION_VALIDATION_TIER1)
+            problem=ToolUse(value=ustid,tool_id=ToolID.DETECTION_VALIDATION_TIER1)
             )
         return [ustid_pair]
     except Exception as e:

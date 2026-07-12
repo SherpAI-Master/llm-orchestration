@@ -48,7 +48,7 @@ def fix_misplaced(data_row: pd.Series) -> SherpAIInstance:
 
         if useable_response:
             solution_values = [useable_response[col] for col in pair.affected_col]
-            solution_toolUse = ToolUse(value=solution_values, used_tool=ToolID.CORRECTION_MISPLACED_TIER1)
+            solution_toolUse = ToolUse(value=solution_values, tool_id=ToolID.CORRECTION_MISPLACED_TIER1)
             pair.solution = solution_toolUse
 
     return proposal
