@@ -29,9 +29,9 @@ def detect_misspelled(data_row: pd.Series) -> SherpAIInstance:
     print("IDENTIFY MISSPELLED ASSISTANT: ", casted_response)
     if casted_response:
         for col, fix in casted_response.items():
-            problem_toolUse = ToolUse(value=[data_row[col]], used_tool=ToolID.DETECTION_MISSPELLED_TIER1)
-            solution_toolUse = ToolUse(value=[fix], used_tool=ToolID.DETECTION_MISSPELLED_TIER1)
-            pair = Pair(affected_col=[col],problem=problem_toolUse,solution=solution_toolUse)
+            problem_toolUse = ToolUse(value={col: data_row[col]}, tool_id=ToolID.DETECTION_MISSPELLED_TIER1)
+            solution_toolUse = ToolUse(value={col: fix}, tool_id=ToolID.DETECTION_MISSPELLED_TIER1)
+            pair = Pair(row_id=data_row.name, problem=problem_toolUse, solution=solution_toolUse)
         proposal.misspelled.append(pair)
         return proposal
 

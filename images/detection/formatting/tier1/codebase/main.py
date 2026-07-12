@@ -18,8 +18,8 @@ def detect_formatting(data_row: pd.Series) -> SherpAIInstance:
     
     for col, value in pure_data.items():
         if not FormattingRules.is_valid(col, value):
-            toolUse = ToolUse(value=[value], used_Tool=ToolID.DETECTION_FORMATTING_TIER1)
-            pair = Pair(affected_col=[col],problem=toolUse)
+            toolUse = ToolUse(value={col: value}, tool_id=ToolID.DETECTION_FORMATTING_TIER1)
+            pair = Pair(row_id=data_row.name, problem=toolUse)
             incorrect_cols.append(pair)
 
     proposal.formatting.extend(incorrect_cols)
