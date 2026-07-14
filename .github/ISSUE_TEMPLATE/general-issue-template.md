@@ -1,5 +1,5 @@
 ---
-name: Research and Development issue template
+name: General issue template
 about: Describe this issue template's purpose here.
 title: ''
 labels: ''
