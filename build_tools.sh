@@ -20,4 +20,4 @@ docker build --no-cache -t homeserver:5000/llm-orchestration/correction_validati
 docker build --no-cache -t homeserver:5000/llm-orchestration/integration_duplicate_pairs_tier1_codebase:latest images/integration/duplicate_pairs/tier1/codebase/
 docker build --no-cache -t homeserver:5000/llm-orchestration/integration_ditto_tier1_codebase:latest images/integration/ditto/tier1/codebase/
 
-# #docker compose build --no-cache && docker compose up
+# docker compose build --no-cache && docker compose up

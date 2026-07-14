@@ -3,6 +3,7 @@
 import pandas as pd
 from pathlib import Path
 import re
+from pydantic import BaseModel
 
 from sherpai_schemas import SherpAIInstance, ToolID, ToolUse, Pair, Prompts, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, inference_conversation, smart_cast
 

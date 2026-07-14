@@ -15,8 +15,8 @@ def detect_missing(data_row: pd.Series) -> SherpAIInstance:
     missing_cols = []
     for key, value in get_pure_data(data_row).items():
         if not value or pd.isna(value):
-            problem_toolUse = ToolUse(value=[value],tool_id=ToolID.DETECTION_MISSING_TIER1)
-            pair = Pair(row_id=data_row.name, affected_col=[key],problem=problem_toolUse)
+            problem_toolUse = ToolUse(value={key: value},tool_id=ToolID.DETECTION_MISSING_TIER1)
+            pair = Pair(row_id=data_row.name, problem=problem_toolUse)
             missing_cols.append(pair)
             
     proposal.missing_value.extend(missing_cols)

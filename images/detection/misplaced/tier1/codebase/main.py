@@ -27,8 +27,8 @@ def detect_misplaced(data_row: pd.Series) -> SherpAIInstance:
     if not original_list:
         return proposal
     missing_col, overfilled_col = original_list[0].strip("[]'").split(">", 1)
-    toolUse = ToolUse(value=[data_row[missing_col], data_row[overfilled_col]], reason=original_list[0], tool_id=ToolID.DETECTION_MISPLACED_TIER1)     # Strucutre 0: missing_col, 1: overfilled_col
-    pair = Pair(row_id=data_row.name, affected_col=[missing_col, overfilled_col], problem=toolUse)
+    toolUse = ToolUse(value={missing_col: data_row[missing_col], overfilled_col: data_row[overfilled_col]}, reason=original_list[0], tool_id=ToolID.DETECTION_MISPLACED_TIER1)     # Strucutre 0: missing_col, 1: overfilled_col
+    pair = Pair(row_id=data_row.name, problem=toolUse)
     proposal.misplaced.append(pair)
     return proposal
 
