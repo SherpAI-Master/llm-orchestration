@@ -1,33 +1,20 @@
-# Execution of correction_missing__tier1
+# Execution of correction_misspelled_tier1
 
 import pandas as pd
-from pathlib import Path
 
-from sherpai_schemas import SherpAIInstance, Fix, parse_dimensions_from_str, parse_dimensions_to_str
+from sherpai_schemas import PipelineRunner, PipelineStage, PipelineTool, SherpAIInstance, ToolIdentity
 
 
-INPUT = Path("/job/input.jsonl")
-OUTPUT = Path("/job/output.jsonl")
+class MisspelledCorrectionTool(PipelineTool):
+    """No-op: MisspelledDetectionTool already proposes a correction alongside each
+    detection in the same LLM call, so there is nothing left for this stage to do.
+    Kept only so the correction_misspelled_tier1 compose target stays valid."""
 
-def fix_misspelled(data_row: pd.Series) -> SherpAIInstance:
-    """Implement detected misspellings changes."""
-    proposal: SherpAIInstance = data_row["SolutionSpace"]
-    data_row = proposal.apply_solutions(data_row)
-    misspelled_cols = proposal.misspelled
-    if not misspelled_cols:
-        return proposal
+    identity = ToolIdentity(stage=PipelineStage.CORRECTION, tool="misspelled", tier=1)
 
-    for problem in misspelled_cols:
-        col, replacement = problem.strip("()").split("|", 1)
-        fix: Fix = getattr(proposal, col)
-        fix.value = replacement
+    def process_row(self, row: pd.Series, instance: SherpAIInstance) -> SherpAIInstance:
+        return instance
 
-    return proposal
 
-df = pd.read_json(INPUT, lines=True)
-df = parse_dimensions_from_str(df)
-df["SolutionSpace"] = df.apply(fix_misspelled, axis=1)
-df = df.apply(lambda row: row["SolutionSpace"].apply_proposal(row), axis=1)
-df["MetaDataSpace"].apply(lambda instance: instance.now(tool_name=fix_misspelled.__name__, trainable=False, model_name="unsloth/gemma-3-27b-it-bnb-4bit"))
-df = parse_dimensions_to_str(df)
-df.to_json(OUTPUT, lines=True, orient="records")
+if __name__ == "__main__":
+    PipelineRunner(MisspelledCorrectionTool()).run()

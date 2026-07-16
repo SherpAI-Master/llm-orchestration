@@ -1,37 +1,40 @@
 # Execution of detection_formatting_tier1
 
 import pandas as pd
-from pathlib import Path
 
-from sherpai_schemas import SherpAIInstance, Pair, ToolUse, ToolID, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str, FormattingRules
+from sherpai_schemas import (
+    Finding,
+    FieldChange,
+    FormattingRules,
+    PipelineRunner,
+    PipelineStage,
+    PipelineTool,
+    ProblemType,
+    Proposal,
+    SherpAIInstance,
+    ToolIdentity,
+    get_pure_data,
+)
 
 
-INPUT = Path("/job/input.jsonl")
-OUTPUT = Path("/job/output.jsonl")
+class FormattingDetectionTool(PipelineTool):
+    """Flags values that don't match their column's expected format."""
 
-def detect_formatting(data_row: pd.Series) -> SherpAIInstance:
-    """See if dots, so abbreviations, are in the data."""
-    proposal: SherpAIInstance = data_row["SherpAISpace"]
-    data_row = proposal.apply_solutions(data_row)
-    incorrect_cols = []
+    identity = ToolIdentity(stage=PipelineStage.DETECTION, tool="formatting", tier=1)
 
-    pure_data = get_pure_data(data_row)
-    
-    for col, value in pure_data.items():
-        # Skip null/None values because other problem type
-        if not value or pd.isna(value):
-            continue
-        if not FormattingRules.is_valid(col, value):
-            toolUse = ToolUse(value={col: value}, tool_id=ToolID.DETECTION_FORMATTING_TIER1)
-            pair = Pair(row_id=data_row.name, problem=toolUse)
-            incorrect_cols.append(pair)
+    def process_row(self, row: pd.Series, instance: SherpAIInstance) -> SherpAIInstance:
+        # PipelineRunner has already applied any previously-accepted corrections
+        # onto `row` before calling this method.
+        for col, value in get_pure_data(row).items():
+            # Skip null/None values because other problem type
+            if not value or pd.isna(value):
+                continue
+            if not FormattingRules.is_valid(col, value):
+                detection = Proposal(identity=self.identity, changes=[FieldChange(column=col, value=value)])
+                detection.mark_review_ready()
+                instance.add_finding(Finding(problem_type=ProblemType.FORMATTING, detection=detection))
+        return instance
 
-    proposal.formatting.extend(incorrect_cols)
-    return proposal
 
 if __name__ == "__main__":
-    df = pd.read_json(INPUT, lines=True)
-    df = parse_dimensions_from_str(df)
-    df["SherpAISpace"] = df.apply(detect_formatting, axis=1)
-    df = parse_dimensions_to_str(df)
-    df.to_json(OUTPUT, lines=True, orient="records")
+    PipelineRunner(FormattingDetectionTool()).run()

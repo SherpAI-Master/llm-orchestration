@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
+from sherpai_schemas import PipelineStage, ToolIdentity
 
 
 def create_job_folder(base_path: Path) -> Path:
@@ -49,8 +50,11 @@ def extract_compose_name(tool_dict: dict, compose_folder: Path) -> str:
     required_keys = {"tool", "pool", "tier"}
     if missing := required_keys - tool_dict.keys():
         raise KeyError(f"Missing keys in tool_dict: {missing}")
-    
-    compose_name = f"{tool_dict['pool']}_{tool_dict['tool']}_tier{tool_dict['tier']}.yml"
+
+    identity = ToolIdentity(
+        stage=PipelineStage(tool_dict["pool"]), tool=tool_dict["tool"], tier=tool_dict["tier"]
+    )
+    compose_name = identity.compose_name()
 
     if not (compose_folder / compose_name).exists():
         raise FileNotFoundError(f"Compose '{compose_name}' not found in {compose_folder}")

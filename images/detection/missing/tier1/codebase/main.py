@@ -1,31 +1,36 @@
-# Execution of detection_missing__tier1
+# Execution of detection_missing_tier1
 
 import pandas as pd
-from pathlib import Path
 
-from sherpai_schemas import SherpAIInstance, ToolUse, ToolID, Pair, get_pure_data, parse_dimensions_from_str, parse_dimensions_to_str
+from sherpai_schemas import (
+    Finding,
+    FieldChange,
+    PipelineRunner,
+    PipelineStage,
+    PipelineTool,
+    ProblemType,
+    Proposal,
+    SherpAIInstance,
+    ToolIdentity,
+    get_pure_data,
+)
 
 
-INPUT = Path("/job/input.jsonl")
-OUTPUT = Path("/job/output.jsonl")
+class MissingValueDetectionTool(PipelineTool):
+    """Flags columns whose value is missing or empty."""
 
-def detect_missing(data_row: pd.Series) -> SherpAIInstance:
-    """See if a value is missing or represents a missing value"""
-    proposal: SherpAIInstance = data_row["SherpAISpace"]
-    data_row = proposal.apply_solutions(data_row)
-    missing_cols = []
-    for key, value in get_pure_data(data_row).items():
-        if not value or pd.isna(value):
-            problem_toolUse = ToolUse(value={key: value},tool_id=ToolID.DETECTION_MISSING_TIER1)
-            pair = Pair(row_id=data_row.name, problem=problem_toolUse)
-            missing_cols.append(pair)
-            
-    proposal.missing_value.extend(missing_cols)
-    return proposal
+    identity = ToolIdentity(stage=PipelineStage.DETECTION, tool="missing", tier=1)
+
+    def process_row(self, row: pd.Series, instance: SherpAIInstance) -> SherpAIInstance:
+        # PipelineRunner has already applied any previously-accepted corrections
+        # onto `row` before calling this method.
+        for key, value in get_pure_data(row).items():
+            if not value or pd.isna(value):
+                detection = Proposal(identity=self.identity, changes=[FieldChange(column=key, value=value)])
+                detection.mark_review_ready()
+                instance.add_finding(Finding(problem_type=ProblemType.MISSING_VALUE, detection=detection))
+        return instance
+
 
 if __name__ == "__main__":
-    df = pd.read_json(INPUT, lines=True)
-    df = parse_dimensions_from_str(df)
-    df["SherpAISpace"] = df.apply(detect_missing, axis=1)
-    df = parse_dimensions_to_str(df)
-    df.to_json(OUTPUT, lines=True, orient="records")
+    PipelineRunner(MissingValueDetectionTool()).run()

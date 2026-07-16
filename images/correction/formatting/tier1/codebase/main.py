@@ -1,46 +1,48 @@
-# Execution of detection_formatting_tier1
+# Execution of correction_formatting_tier1
 
 import pandas as pd
-from pathlib import Path
-import re
 
-from sherpai_schemas import SherpAIInstance, parse_dimensions_from_str, parse_dimensions_to_str, sherpai_completion, FormattingRules, Prompts, ToolUse, ToolID, Phase
+from sherpai_schemas import (
+    Finding,
+    FormattingRules,
+    PipelineRunner,
+    PipelineStage,
+    PipelineTool,
+    ProblemType,
+    Prompts,
+    Proposal,
+    SherpAIInstance,
+    ToolIdentity,
+)
 
 
-INPUT = Path("/job/input.jsonl")
-OUTPUT = Path("/job/output.jsonl")
+class FormattingCorrectionTool(PipelineTool):
+    """Proposes a reformatted value for columns that failed their format check."""
 
-def fix_formatting(data_row: pd.Series) -> SherpAIInstance:
-    """Fix detected formatting if possible, else mark part as missing."""
-    proposal: SherpAIInstance = data_row["SherpAISpace"]
-    data_row = proposal.apply_solutions(data_row)
-    bad_format_cols = proposal.formatting
+    identity = ToolIdentity(stage=PipelineStage.CORRECTION, tool="formatting", tier=1)
+    batch_system_prompt = Prompts.FIX_FORMATTING_SYSTEM
+    batch_max_tokens = 240
 
-    if not bad_format_cols:
-        return proposal
+    def process_row(self, row: pd.Series, instance: SherpAIInstance) -> SherpAIInstance:
+        # PipelineRunner has already applied any previously-accepted corrections
+        # onto `row` before calling this method.
+        findings: list[Finding] = [
+            f for f in instance.by_type(ProblemType.FORMATTING) if f.correction is None
+        ]
 
-    print("\n--- Fixing Formatting Values ---")
-    for pair in bad_format_cols:
-        problem_dict = iter(pair.problem.value.items())
-        formatting_col, _ = next(problem_dict)
-        print("formatting_col: ", formatting_col)
-        col_rule = FormattingRules.get_pattern(formatting_col)
-        print("col_rule: ", col_rule)
+        if not findings:
+            return instance
 
-        pair.solution = ToolUse(
-            value={formatting_col: Prompts.FIX_FORMATTING_USER.format(col_name=formatting_col, col_value=data_row[formatting_col], col_rule=col_rule)},
-            tool_id=ToolID.CORRECTION_FORMATTING_TIER1,
-            phase= Phase.BATCHING_READY
-        )
-    return proposal
+        print("\n--- Fixing Formatting Values ---")
+        for finding in findings:
+            col = finding.detection.single().column
+            col_rule = FormattingRules.get_pattern(col)
+            prompt = Prompts.FIX_FORMATTING_USER.format(col_name=col, col_value=row[col], col_rule=col_rule)
+            finding.correction = Proposal(identity=self.identity)
+            finding.correction.mark_batching_ready(prompt)
+
+        return instance
 
 
 if __name__ == "__main__":
-    df = pd.read_json(INPUT, lines=True)
-    df = parse_dimensions_from_str(df)
-    df["SherpAISpace"] = df.apply(fix_formatting, axis=1)
-    df["SherpAISpace"] = sherpai_completion(
-            df["SherpAISpace"], "formatting", "solution", Prompts.FIX_FORMATTING_SYSTEM, max_tokens=240
-        )
-    df = parse_dimensions_to_str(df)
-    df.to_json(OUTPUT, lines=True, orient="records")
+    PipelineRunner(FormattingCorrectionTool()).run()

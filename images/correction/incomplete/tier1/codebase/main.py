@@ -1,50 +1,45 @@
-# Execution of detection_incomplete_tier1
+# Execution of correction_incomplete_tier1
 
 import pandas as pd
-from pathlib import Path
 
 from sherpai_schemas import (
-    SherpAIInstance,
-    ToolUse,
-    Pair,
+    Finding,
+    PipelineRunner,
+    PipelineStage,
+    PipelineTool,
+    ProblemType,
     Prompts,
-    Phase,
-    ToolID,
-    parse_dimensions_from_str,
-    parse_dimensions_to_str,
-    sherpai_completion,
+    Proposal,
+    SherpAIInstance,
+    ToolIdentity,
 )
 
-INPUT = Path("/job/input.jsonl")
-OUTPUT = Path("/job/output.jsonl")
 
+class IncompleteCorrectionTool(PipelineTool):
+    """Proposes a written-out form for detected abbreviations."""
 
-def remember_incomplete(data_row: pd.Series) -> SherpAIInstance:
-    """Write out any abbreviation found in data."""
-    proposal: SherpAIInstance = data_row["SherpAISpace"]
-    data_row = proposal.apply_solutions(data_row)
-    incomplete: list[Pair] = proposal.incomplete
+    identity = ToolIdentity(stage=PipelineStage.CORRECTION, tool="incomplete", tier=1)
+    batch_system_prompt = Prompts.FIX_INCOMPLETE_SYSTEM
 
-    if not incomplete:
-        return proposal
+    def process_row(self, row: pd.Series, instance: SherpAIInstance) -> SherpAIInstance:
+        # PipelineRunner has already applied any previously-accepted corrections
+        # onto `row` before calling this method.
+        findings: list[Finding] = [
+            f for f in instance.by_type(ProblemType.INCOMPLETE) if f.correction is None
+        ]
 
-    print(f"\n--- Fixing Incomplete Values of {incomplete} ---")
-    for incomplete_pair in incomplete:
-        key, _ = next(iter(incomplete_pair.problem.value.items()))
-        incomplete_pair.solution = ToolUse(
-            value={key: Prompts.FIX_INCOMPLETE_USER.format(col_value=str(data_row[key]), col_name=key)},
-            tool_id=ToolID.CORRECTION_INCOMPLETE_TIER1,
-            phase=Phase.BATCHING_READY,
-        )
-    return proposal
+        if not findings:
+            return instance
+
+        print(f"\n--- Fixing Incomplete Values of {findings} ---")
+        for finding in findings:
+            col = finding.detection.single().column
+            prompt = Prompts.FIX_INCOMPLETE_USER.format(col_value=str(row[col]), col_name=col)
+            finding.correction = Proposal(identity=self.identity)
+            finding.correction.mark_batching_ready(prompt)
+
+        return instance
 
 
 if __name__ == "__main__":
-    df = pd.read_json(INPUT, lines=True)
-    df = parse_dimensions_from_str(df)
-    df["SherpAISpace"] = df.apply(remember_incomplete, axis=1)
-    df["SherpAISpace"] = sherpai_completion(
-        df["SherpAISpace"], "incomplete", "solution", Prompts.FIX_INCOMPLETE_SYSTEM,
-    )
-    df = parse_dimensions_to_str(df)
-    df.to_json(OUTPUT, lines=True, orient="records")
+    PipelineRunner(IncompleteCorrectionTool()).run()
