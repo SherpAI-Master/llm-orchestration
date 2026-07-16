@@ -41,14 +41,14 @@ def fix_misplaced(data_row: pd.Series) -> SherpAIInstance:
     for pair in misplaced:
         problem_dict = iter(pair.problem.value.items())
         missing_col, _ = next(problem_dict)
-        overfilled_col, overfilled_value = next(problem_dict)
+        overfilled_col, _ = next(problem_dict)
 
         pair.solution = ToolUse(
             value={
                 missing_col: Prompts.FIX_MISPLACED_USER.format(
                     missing_col=missing_col,
                     overfilled_col=overfilled_col,
-                    overfilled_value=overfilled_value,
+                    overfilled_value=data_row[overfilled_col],
                 )
             },
             tool_id=ToolID.CORRECTION_MISPLACED_TIER1,

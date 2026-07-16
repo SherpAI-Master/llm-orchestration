@@ -12,11 +12,15 @@ OUTPUT = Path("/job/output.jsonl")
 def detect_formatting(data_row: pd.Series) -> SherpAIInstance:
     """See if dots, so abbreviations, are in the data."""
     proposal: SherpAIInstance = data_row["SherpAISpace"]
+    data_row = proposal.apply_solutions(data_row)
     incorrect_cols = []
 
     pure_data = get_pure_data(data_row)
     
     for col, value in pure_data.items():
+        # Skip null/None values because other problem type
+        if not value or pd.isna(value):
+            continue
         if not FormattingRules.is_valid(col, value):
             toolUse = ToolUse(value={col: value}, tool_id=ToolID.DETECTION_FORMATTING_TIER1)
             pair = Pair(row_id=data_row.name, problem=toolUse)

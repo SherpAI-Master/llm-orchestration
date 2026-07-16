@@ -13,6 +13,7 @@ OUTPUT = Path("/job/output.jsonl")
 def detect_incomplete(data_row: pd.Series) -> SherpAIInstance:
     """See if dots, so abbreviations, are in the data."""
     proposal: SherpAIInstance = data_row["SherpAISpace"]
+    data_row = proposal.apply_solutions(data_row)
     incomplete_cols: list[Pair]= []
     for col_name, value in get_pure_data(data_row).items():
         if pd.notna(value) and isinstance(value, str) and has_abbreviation(value):

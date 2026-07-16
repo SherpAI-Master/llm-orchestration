@@ -15,6 +15,7 @@ def detect_misplaced(data_row: pd.Series) -> SherpAIInstance:
     """Identify misplaced values in data row."""
     print("\n--- Identifying misplaced Values ---")
     proposal: SherpAIInstance = data_row["SherpAISpace"]
+    data_row = proposal.apply_solutions(data_row)
     pure_data = get_pure_data(data_row)
     assistant_response = inference_conversation(
         system_prompt=Prompts.DETECT_MISPLACED_SYSTEM,

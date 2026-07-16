@@ -147,6 +147,7 @@ def _validate_identifiers(id_row: pd.Series) -> list[Pair]:
 def detect_validation(data_row: pd.Series) -> SherpAIInstance:
     """Identify misplaced values in data row."""
     proposal: SherpAIInstance = data_row["SherpAISpace"]
+    data_row = proposal.apply_solutions(data_row)
     pure_data = get_pure_data(data_row)
     format_problem_cols = set(proposal.get_affected_cols("formatting", "missing_value"))
 

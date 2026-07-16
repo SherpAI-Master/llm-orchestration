@@ -12,6 +12,7 @@ OUTPUT = Path("/job/output.jsonl")
 def detect_missing(data_row: pd.Series) -> SherpAIInstance:
     """See if a value is missing or represents a missing value"""
     proposal: SherpAIInstance = data_row["SherpAISpace"]
+    data_row = proposal.apply_solutions(data_row)
     missing_cols = []
     for key, value in get_pure_data(data_row).items():
         if not value or pd.isna(value):

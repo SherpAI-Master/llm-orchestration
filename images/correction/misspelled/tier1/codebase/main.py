@@ -3,16 +3,17 @@
 import pandas as pd
 from pathlib import Path
 
-from sherpai_schemas import SolutionInstance, Fix, parse_dimensions_from_str, parse_dimensions_to_str
+from sherpai_schemas import SherpAIInstance, Fix, parse_dimensions_from_str, parse_dimensions_to_str
 
 
 INPUT = Path("/job/input.jsonl")
 OUTPUT = Path("/job/output.jsonl")
 
-def fix_misspelled(data_row: pd.Series) -> SolutionInstance:
+def fix_misspelled(data_row: pd.Series) -> SherpAIInstance:
     """Implement detected misspellings changes."""
-    proposal: SolutionInstance = data_row["SolutionSpace"]
-    misspelled_cols = data_row["ProblemSpace"].misspelled
+    proposal: SherpAIInstance = data_row["SolutionSpace"]
+    data_row = proposal.apply_solutions(data_row)
+    misspelled_cols = proposal.misspelled
     if not misspelled_cols:
         return proposal
 
