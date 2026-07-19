@@ -67,23 +67,22 @@ const translations: Record<Language, I18nDictionary> = {
 
     "dashboard.areas.title": "Verifizierungsbereiche in SherpAI",
     "dashboard.areas.subtitle":
-      "Die Plattform bündelt mehrere Klassen von Datenqualitätsproblemen in einem Lauf:",
+      "SherpAI ermöglicht Unternehmen, den Wert ihrer Unternehmensdaten zu maximieren, indem die Datenqualität innerhalb bestehender Systeme automatisiert verbessert wird. Als KI-gestützte White-Label-Lösung für ERP-, CRM- und weitere Unternehmensplattformen erkennt SherpAI Dubletten, fehlerhafte Zuordnungen sowie unvollständige oder inkonsistente Datensätze und unterstützt deren strukturierte Bereinigung.",
     "dashboard.areas.item.dup":
-      "Dubletten und semantisch ähnliche Einträge",
+      "Dubletten und semantisch ähnliche Einträge durch KI-basiertes Entity Matching",
     "dashboard.areas.item.missing":
-      "Fehlende Pflichtfelder, insbesondere Straße, PLZ, Ort und Land",
+      "Fehlende Pflichtfelder und unvollständige Stammdaten",
     "dashboard.areas.item.format":
-      "Format- und Normalisierungsfehler, z. B. bei PLZ, USt-ID oder Zeichenkodierung",
+      "Format- und Normalisierungsfehler in Adressen, Kennzahlen und Zeichenkodierungen",
     "dashboard.areas.item.incomplete":
-      "Unvollständige Adressen, z. B. fehlende Hausnummer, PLZ, Ort oder Land",
+      "Fehlerhafte Zuordnungen und inkonsistente Datensätze",
     "dashboard.areas.item.enrichment":
-      "Datenbasierte Anreicherungsvorschläge durch Mini-Dorothe auf Basis des vorhandenen Bestands",
+      "Automatisierte Datenqualitätsprüfungen zur Reduktion manuellen Aufwands",
     "dashboard.areas.btn.showResults":
       "Ergebnisse der aktuellen Prüfung ansehen",
 
     "dashboard.status.title": "Systemstatus & Ausblick",
-    "dashboard.status.text":
-      "Das System wurde so entwickelt, dass später trainierte KI-Modelle, spezialisierte Matching-Komponenten und LLM-basierte Hinweislogiken modular angebunden werden können. In einer produktiven Ausbaustufe können hier zusätzlich Laufzeiten, Vergleiche mehrerer Verifikationsläufe und Trends der Datenqualität über die Zeit angezeigt werden.",
+    "dashboard.status.text": "",
 
     "dashboard.summary.title": "Zusammenfassung des letzten Verifikationslaufs",
     "dashboard.summary.none.title":

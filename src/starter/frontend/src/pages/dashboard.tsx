@@ -263,14 +263,7 @@ export default function Dashboard() {
             </Button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-sm text-gray-700">
-            <h3 className="text-sm font-semibold text-gray-900">
-              {t("dashboard.status.title")}
-            </h3>
-            <p className="mt-2 text-[11px] text-gray-500">
-              {t("dashboard.status.text")}
-            </p>
-          </div>
+          {/* Platzhalter: Team entscheidet noch über Nutzung dieses Bereichs */}
         </div>
       </section>
 
