@@ -1,4 +1,8 @@
 [
-    {"pool": "detection", "tool": "misspelled", "tier": 1}
+    {"pool": "detection", "tool": "misplaced", "tier": 1},
+    {"pool": "correction", "tool": "misplaced", "tier": 1},
+    {"pool": "detection", "tool": "missing", "tier": 1},
+    {"pool": "detection", "tool": "validation", "tier": 1},
 
+    {"pool": "correction", "tool": "validation_missing", "tier": 1}
 ]
