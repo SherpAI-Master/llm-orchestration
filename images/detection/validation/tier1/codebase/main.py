@@ -155,6 +155,7 @@ def detect_validation(data_row: pd.Series) -> SherpAIInstance:
     address_cols = ["zeile1", "ort", "plz", "land"]
     id_cols = ["ustid", "steuernr", "iln"]
     basics, address, identifiers = [], [], []
+    print("Problem Cols: ", format_problem_cols)
 
     if format_problem_cols.isdisjoint(set(basic_cols)):
         basics = _validate_basics(pure_data[basic_cols])

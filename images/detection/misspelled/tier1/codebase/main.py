@@ -13,13 +13,10 @@ OUTPUT = Path("/job/output.jsonl")
 MODEL = "unsloth/gemma-3-27b-it-bnb-4bit"
 
 def detect_misspelled(data_row: pd.Series) -> SherpAIInstance:
-    """Identify misspelled values in data row."""
+    """Identify misplaced values in data row."""
     proposal: SherpAIInstance = data_row["SherpAISpace"]
     data_row = proposal.apply_solutions(data_row)
     pure_data = get_pure_data(data_row)
-    problem_toolUse = ToolUse(
-        value={"whole_row_json": pure_data.to_json()}
-    )
     assistant_response = inference_conversation(
         system_prompt=Prompts.DETECT_MISSPELLED_SYSTEM,
         user_prompt=pure_data.to_json(),
