@@ -1,6 +1,6 @@
 """General entrypoint of input and process order via FastAPI."""
 
-import json
+import shutil
 from pathlib import Path
 
 import pandas as pd
@@ -15,9 +15,12 @@ JOB_RUN_FOLDER = HOST_DATA / "process_runs"
 
 app = FastAPI()
 
+INSTRUCTION_FILE = HOST_DATA / "starter_files" / "process-plan.json"
+ENV_FILE =  HOST_DATA / "starter_files" / "process.env"
+
 
 @app.post("/process")
-async def process_files(data: UploadFile, instructions: UploadFile, env: UploadFile) -> str:
+async def process_files(data: UploadFile) -> str:
     """Start data quality process with given order and input data.
 
     :param data: Uploaded JSONL file
@@ -31,12 +34,10 @@ async def process_files(data: UploadFile, instructions: UploadFile, env: UploadF
     input_data_path.write_bytes(await data.read())
 
     # Safe tool order to inputs folder
-    instructions_path = job_folder / "instructions.json"
-    instructions_path.write_bytes(await instructions.read())
+    shutil.copy(INSTRUCTION_FILE, job_folder / "instructions.json")
 
     # Add .job_env
-    env_path = job_folder / ".job_env"
-    env_path.write_bytes(await env.read())
+    shutil.copy(ENV_FILE, job_folder / ".job_env")
 
     # Add data dimensions (Problem-, Solution- and MetaDataSpace)
     input_data_path = add_data_dimensions(input_data_path)
@@ -44,3 +45,8 @@ async def process_files(data: UploadFile, instructions: UploadFile, env: UploadF
     process_job(job_folder, COMPOSE_COLLECTION)
 
     return "Finished!"
+
+@app.get("/health")
+def health() -> dict:
+    """Liveness-Pruefung fuer das Frontend."""
+    return {"status": "ok"}

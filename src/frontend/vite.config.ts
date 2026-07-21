@@ -10,7 +10,7 @@ export default defineConfig({
     // /api-Anfragen werden an die Python Bridge API weitergeleitet
     proxy: {
       "/api": {
-        target: "http://localhost:8100",
+        target: "http://orchestration-platform:8090", //now proxied to scheduler
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },

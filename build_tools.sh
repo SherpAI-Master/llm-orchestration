@@ -2,6 +2,7 @@
 
 docker build --no-cache -t homeserver:5000/llm-orchestration/python_scheduler:latest images/baseImages/scheduler
 docker build --no-cache -t homeserver:5000/llm-orchestration/starter:latest src/starter
+docker build --no-cache -t homeserver:5000/llm-orchestration/frontend:latest src/frontend
 docker build --no-cache -t homeserver:5000/llm-orchestration/scheduler:latest src/scheduler
 
 docker build --no-cache -t homeserver:5000/llm-orchestration/detection_incomplete_tier1_codebase:latest images/detection/incomplete/tier1/codebase/
