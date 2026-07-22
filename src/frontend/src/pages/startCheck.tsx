@@ -82,7 +82,7 @@ export default function StartCheck() {
       formData.append("file", selectedFile);
 
       // Analyse-Pipeline starten (kann mehrere Minuten dauern)
-      const response = await fetch("/api/analyze", { method: "POST", body: formData });
+      const response = await fetch("/api/process", { method: "POST", body: formData });
 
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as { detail?: string };

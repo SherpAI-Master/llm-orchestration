@@ -44,3 +44,8 @@ async def process_files(data: UploadFile, instructions: UploadFile, env: UploadF
     process_job(job_folder, COMPOSE_COLLECTION)
 
     return "Finished!"
+
+@app.get("/health")
+def health() -> dict:
+    """Liveness-Pruefung fuer das Frontend."""
+    return {"status": "ok"}
