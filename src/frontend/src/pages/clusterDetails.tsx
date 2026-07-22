@@ -23,7 +23,7 @@ function similarity(a: string, b: string): number {
 type DiffInfo = { label: string; field: keyof GebauerRecord; refValue: string; value: string };
 
 function buildDiffs(ref: GebauerRecord, cand: GebauerRecord, t: (k: string) => string): DiffInfo[] {
-  return [
+    [
     { label: "Name",                         field: "name1"  },
     { label: t("clusterDetails.streetLabel"), field: "zeile1" },
     { label: "PLZ",                           field: "plz"    },
