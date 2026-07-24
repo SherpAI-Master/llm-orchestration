@@ -79,7 +79,7 @@ export default function StartCheck() {
 
     try {
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      formData.append("data", selectedFile);
 
       // Analyse-Pipeline starten (kann mehrere Minuten dauern)
       const response = await fetch("/api/process", { method: "POST", body: formData });
